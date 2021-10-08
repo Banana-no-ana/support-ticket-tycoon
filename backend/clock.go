@@ -64,7 +64,4 @@ func main() {
 	log.Println("Starting master clock on port 8000")	
 	startClock()
     http.ListenAndServe(":8000", nil)
-
-	
-	
 }

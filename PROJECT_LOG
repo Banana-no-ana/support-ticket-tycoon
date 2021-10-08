@@ -1,0 +1,23 @@
+
+
+
+Backlog: 
+    * Need worker to be able to advance through some of the case scenarios.
+    * How does the "customer" respond? 
+    * We'll definitely need a database.
+    * Somepoint a frontend will be good to have. It should be able to display the workers.
+    * Need a service to keep track of the cases. Some sort of a document database?
+
+
+Stage 1: Scenario 1 - Manual assign some cases
+    * Be able to generate cases
+    * Manual assign cases (Don't need auto assign yet.)
+    * Workers work through a case
+    * View cases and workers on a frontend - so we actually can do some assign 
+
+
+Day 1 (Oct.7): Stubbed out a master clock and worker. 
+    Master clock can now tick on whatever is registered with it 
+        Basically every X seconds send a url request to its /tick
+
+
