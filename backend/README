@@ -1,0 +1,8 @@
+## Getting started
+
+Launch the clock with: go run backend/clock.go
+launch a worker with: go run backend/worker/worker.go
+register worker with clock: curl http://localhost:8000/8080
+    The worker is on port 8080. 
+Now the worker is ticked by the clock
+Assign the worker a case with: curl http://localhost:8080/{caseid}
