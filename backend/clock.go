@@ -18,7 +18,7 @@ func notifySubscribers() {
 		//do nothing for now 
 		serv := fmt.Sprintf("http://localhost:%d/tick/%d", s, tick)
 		log.Println("notifying: ", serv)
-		http.Get(serv)
+		go http.Get(serv)
 	}
 }
 

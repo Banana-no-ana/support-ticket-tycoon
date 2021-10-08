@@ -46,11 +46,6 @@ func calcNextTick() {
 
 func caseAssign(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
-	// var caseId, ok = req.URL.Query()["caseid"]
-	// if !ok || len(caseId[0]) < 1 {
-    //     log.Println("Url Param 'caseid' is missing")
-    //     return 
-    // }
 	caseid := vars["caseid"]
 	c := supportCase{CaseID: caseid, State: "Assigned"}
 	assignedCases = append(assignedCases, c)
