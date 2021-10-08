@@ -13,7 +13,6 @@ var assignedCases []supportCase
 
 
 func hello(w http.ResponseWriter, req *http.Request) {
-
     fmt.Fprintf(w, "hello\n")
 }
 
@@ -28,13 +27,20 @@ func headers(w http.ResponseWriter, req *http.Request) {
 
 type supportCase struct {
 	CaseID string
-	State string //State is the current case state 
+	State string //State is the current case state 	
 }
 
 func calcNextTick() {
 	//Take the first assigned case, and figure out what to do with it. 
+	if len(assignedCases) == 0 {
+		return
+	}
 	currentCase := assignedCases[0]
-	log.Println("Current case: ", currentCase)
+
+	switch currentCase.State {
+	case "Assigned" : //Just assigned. need to triage. 
+		return 
+	}
 	return 
 }
 
@@ -57,7 +63,19 @@ func caseAssign(w http.ResponseWriter, req *http.Request) {
 
 // work on the next assigned thing. 
 func tick(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	tickNum := vars["ticknum"]
+	log.Println("We've been Ticked! Ticknum: ", tickNum)
 
+
+	//TODO: do the actual actions of the tick. 
+	calcNextTick()
+	return
+}
+
+func registerwithClock() {	
+	//TODO: Figure out how to actually do this. 
+	return
 }
 
 func main() {
@@ -65,8 +83,10 @@ func main() {
     r.HandleFunc("/hello", hello)
     r.HandleFunc("/headers", headers)
 	r.HandleFunc("/assign/{caseid}", caseAssign)
-	r.HandleFunc("/tick", tick)
+	r.HandleFunc("/tick/{ticknum}", tick)
 
 	http.Handle("/", r)
+
+	registerwithClock()
     http.ListenAndServe(":8080", nil)
 }
