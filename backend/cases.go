@@ -5,6 +5,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -16,18 +17,21 @@ var cases []Case
 var nextCaseId int //TODO: Change to use closure instead
 
 type Case struct {
-	CaseID string
-	State  string //State is the current case state
+	CaseID   int
+	State    string //State is the current case state
+	Assignee string //worker UID.
 }
 
 func generate(w http.ResponseWriter, req *http.Request) {
-	c := Case{CaseID: caseid, State: "Assigned"}
-	assignedCases = append(assignedCases, c)
-	log.Println("case assigned: ", caseid)
-	fmt.Fprintf(w, "case accepted %s, assigned cases: %d \n", caseid, len(assignedCases))
-
-	//Trigger next work item recalc
-	return
+	c := Case{CaseID: nextCaseId, State: "New", Assignee: "Unassigned"}
+	cases = append(cases, c)
+	log.Println("case created: ", nextCaseId)
+	b, err := json.Marshal(c)
+	if err != nil {
+		log.Fatal("Failed to marshal caseID: ", nextCaseId)
+	}
+	fmt.Fprintf(w, string(b))
+	nextCaseId++
 }
 
 func main() {
@@ -35,7 +39,5 @@ func main() {
 	r.HandleFunc("/generate", generate) //generate new case and return a case ID.
 
 	http.Handle("/", r)
-
-	registerwithClock()
-	http.ListenAndServe(":8082", nil)
+	http.ListenAndServe(":8002", nil)
 }

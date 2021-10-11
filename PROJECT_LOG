@@ -1,12 +1,10 @@
-
-
-
 Backlog: 
     * Need worker to be able to advance through some of the case scenarios.
     * How does the "customer" respond? 
     * We'll definitely need a database.
     * Somepoint a frontend will be good to have. It should be able to display the workers.
     * Need a service to keep track of the cases. Some sort of a document database?
+    * At some point we're going to need to write tests. 
 
 
 Stage 1: Scenario 1 - Manual assign some cases
@@ -16,8 +14,15 @@ Stage 1: Scenario 1 - Manual assign some cases
     * View cases and workers on a frontend - so we actually can do some assign 
 
 
+Day 3 (Oct.11): Goals of today:
+    * Get to a point where we can have a UI to click a button to generate a case, and then be able to assign the case to a worker. 
+
+
+Day 2 (Oct.8): Did some tutorials on flutter and dart. Not sure I completely understand it all. 
+    Flutter seems to be writing dart with a bunch of UI stuff peppered in. But seems to be kinda bloaty. 
+    Watched this tutorial on flutter/dart + go + rpc. Super useful: https://www.youtube.com/watch?v=Vd9sV8_uDrQ
+
+
 Day 1 (Oct.7): Stubbed out a master clock and worker. 
     Master clock can now tick on whatever is registered with it 
         Basically every X seconds send a url request to its /tick
-
-
