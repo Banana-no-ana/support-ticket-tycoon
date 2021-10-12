@@ -16,5 +16,3 @@ service Assign{
     rpc Assign(Case) returns (Response); 
     rpc UnAssign(Case) returns (Response); 
 }
-
-
