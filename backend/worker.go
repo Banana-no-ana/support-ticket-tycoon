@@ -59,9 +59,15 @@ func registerwithClock() {
 	return
 }
 
+func unassign(w http.ResponseWriter, req *http.Request) {
+	//TODO: Implement this
+	return
+}
+
 func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/assign/{caseid}", caseAssign)
+	r.HandleFunc("/unassign/{caseid}", caseAssign)
 	r.HandleFunc("/tick/{ticknum}", tick)
 
 	http.Handle("/", r)
