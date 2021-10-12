@@ -1,0 +1,20 @@
+//Define working with cases. 
+syntax = "proto3";
+
+package case;
+
+message Case { 
+    int32 caseID = 1; 
+}
+
+message Response {
+    bool Status = 1; 
+}
+
+
+service Assign{
+    rpc Assign(Case) returns (Response); 
+    rpc UnAssign(Case) returns (Response); 
+}
+
+
