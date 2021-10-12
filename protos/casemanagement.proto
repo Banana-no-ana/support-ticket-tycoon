@@ -1,7 +1,10 @@
 //Define working with cases. 
 syntax = "proto3";
 
+option go_package = "github.com/Banana-no-ana/support-ticket-tycoon/protos/casemanagement";
 package casemanagement;
+
+
 
 message Case { 
     int32 caseID = 1; 

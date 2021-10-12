@@ -1,7 +1,9 @@
 //Define working with cases. 
 syntax = "proto3";
 
+option go_package = "github.com/Banana-no-ana/support-ticket-tycoon/protos/clock";
 package clock;
+
 
 message WorkerRegister { 
     string ID = 1; 
