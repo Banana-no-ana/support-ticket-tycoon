@@ -1,7 +1,7 @@
 //Define working with cases. 
 syntax = "proto3";
 
-package case;
+package casemanagement;
 
 message Case { 
     int32 caseID = 1; 
