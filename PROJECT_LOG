@@ -14,8 +14,12 @@ Stage 1: Scenario 1 - Manual assign some cases
     * View cases and workers on a frontend - so we actually can do some assign 
 
 
-Day 3 (Oct.11): Goals of today:
-    * Get to a point where we can have a UI to click a button to generate a case, and then be able to assign the case to a worker. 
+Day 3 (Oct.11)
+    * Wanted to get to a UI, but instead made some parts of the API layer.
+    * Thought about game engines. Maybe need to do unity. There's also this framework: https://love2d.org/, not sure if worth. Can also consider Construct 3
+        * I need the game engine to draw characters. But that might be able to be done with just simple animation
+            * Might also need panning and zooming, not sure if flutter can just do that. 
+    * Starting learning a little about grpc. 
 
 
 Day 2 (Oct.8): Did some tutorials on flutter and dart. Not sure I completely understand it all. 
