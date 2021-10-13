@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	pb "github.com/Banana-no-ana/support-ticket-tycoon/protos/clock"
 	"github.com/gorilla/mux"
 )
 
@@ -49,6 +50,18 @@ func register(w http.ResponseWriter, req *http.Request) {
 	log.Println("Received request to register on port: ", port)
 	fmt.Fprintf(w, "hello, %d \n", port)
 	services = append(services, port)
+}
+
+// ListFeatures lists all features contained within the given bounding Rectangle.
+func (s *routeGuideServer) ListFeatures(rect *pb.Rectangle, stream pb.RouteGuide_ListFeaturesServer) error {
+	for _, feature := range s.savedFeatures {
+		if inRange(feature.Location, rect) {
+			if err := stream.Send(feature); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func main() {
