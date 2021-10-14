@@ -1,0 +1,19 @@
+//Define working with cases. 
+syntax = "proto3";
+
+option go_package = "github.com/Banana-no-ana/support-ticket-tycoon/backend/protos/clock";
+package clock;
+
+
+message WorkerRegister { 
+    string ID = 1; 
+}
+
+message Tick {
+    int32 TickNum = 1; 
+}
+
+
+service Clock{
+    rpc Register(WorkerRegister) returns (stream Tick); 
+}

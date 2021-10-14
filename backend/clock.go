@@ -3,11 +3,13 @@ package main
 import (
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"strconv"
 	"time"
 
-	pb "github.com/Banana-no-ana/support-ticket-tycoon/protos/clock"
+	pb "github.com/Banana-no-ana/support-ticket-tycoon/backend/protos/clock"
+
 	"github.com/gorilla/mux"
 )
 
@@ -52,16 +54,9 @@ func register(w http.ResponseWriter, req *http.Request) {
 	services = append(services, port)
 }
 
-// ListFeatures lists all features contained within the given bounding Rectangle.
-func (s *routeGuideServer) ListFeatures(rect *pb.Rectangle, stream pb.RouteGuide_ListFeaturesServer) error {
-	for _, feature := range s.savedFeatures {
-		if inRange(feature.Location, rect) {
-			if err := stream.Send(feature); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
+// server is used to implement helloworld.GreeterServer.
+type server struct {
+	pb.UnimplementedGreeterServer
 }
 
 func main() {
@@ -72,5 +67,16 @@ func main() {
 	http.Handle("/", r)
 	log.Println("Starting master clock on port 8000")
 	startClock()
-	http.ListenAndServe(":8000", nil)
+	go http.ListenAndServe(":8000", nil)
+
+	lis, err := net.Listen("tcp", ":8001")
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+	s := grpc.NewServer()
+	pb.RegisterGreeterServer(s, &server{})
+	log.Printf("server listening at %v", lis.Addr())
+	if err := s.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
 }
