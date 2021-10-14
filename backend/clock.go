@@ -15,7 +15,7 @@ import (
 )
 
 var services []int
-var tick int = 0
+var tick int32 = 0
 
 func notifySubscribers() {
 	for _, s := range services {
@@ -55,9 +55,20 @@ func register(w http.ResponseWriter, req *http.Request) {
 	services = append(services, port)
 }
 
-// server is used to implement helloworld.GreeterServer.
-type server struct {
-	pb.UnimplementedGreeterServer
+type ClockServer struct {
+	pb.UnimplementedClockServer
+}
+
+func newServer() *ClockServer {
+	s := &ClockServer{}
+	return s
+}
+
+func (s *ClockServer) Register(worker *pb.WorkerRegister, stream pb.Clock_RegisterServer) error {
+	for {
+		stream.Send(&pb.Tick{TickNum: tick})
+		time.Sleep(2000 * time.Millisecond)
+	}
 }
 
 func main() {
@@ -75,7 +86,7 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	s := grpc.NewServer()
-	pb.RegisterGreeterServer(s, &server{})
+	pb.RegisterClockServer(s, newServer())
 	log.Printf("server listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
