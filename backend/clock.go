@@ -8,8 +8,9 @@ import (
 	"strconv"
 	"time"
 
-	pb "github.com/Banana-no-ana/support-ticket-tycoon/backend/protos/clock"
+	"google.golang.org/grpc"
 
+	pb "github.com/Banana-no-ana/support-ticket-tycoon/backend/protos"
 	"github.com/gorilla/mux"
 )
 
