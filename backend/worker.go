@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -85,14 +86,17 @@ func registerwithClock(client pb.ClockClient) {
 }
 
 func main() {
+	listeningport := flag.String("listen_addr", ":8081", "set the listneing port of the worker. ")
+	flag.Parse()
+
 	r := mux.NewRouter()
 	r.HandleFunc("/assign/{caseid}", caseAssign)
 	r.HandleFunc("/unassign/{caseid}", caseAssign)
 	r.HandleFunc("/tick/{ticknum}", tick)
 
 	http.Handle("/", r)
-
-	go http.ListenAndServe(":8080", nil)
+	log.Println("listening on :", *listeningport)
+	go http.ListenAndServe(*listeningport, nil)
 
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithInsecure())
