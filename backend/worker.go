@@ -1,11 +1,16 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"strconv"
 
+	"google.golang.org/grpc"
+
+	pb "github.com/Banana-no-ana/support-ticket-tycoon/backend/protos"
 	"github.com/gorilla/mux"
 )
 
@@ -54,14 +59,29 @@ func tick(w http.ResponseWriter, req *http.Request) {
 	return
 }
 
-func registerwithClock() {
-	//TODO: Figure out how to actually do this.
-	return
-}
-
 func unassign(w http.ResponseWriter, req *http.Request) {
 	//TODO: Implement this
 	return
+}
+
+func registerwithClock(client pb.ClockClient) {
+	log.Printf("Connecting to the clock server")
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	stream, err := client.Register(ctx, &pb.WorkerRegister{ID: "worker-1"})
+	if err != nil {
+		log.Fatalf("%v.ListFeatures(_) = _, %v", client, err)
+	}
+	for {
+		TickTick, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatalf("%v.ListFeatures(_) = _, %v", client, err)
+		}
+		log.Printf("Tick received: %d", TickTick.TickNum)
+	}
 }
 
 func main() {
@@ -72,6 +92,14 @@ func main() {
 
 	http.Handle("/", r)
 
-	registerwithClock()
-	http.ListenAndServe(":8080", nil)
+	go http.ListenAndServe(":8080", nil)
+
+	var opts []grpc.DialOption
+	opts = append(opts, grpc.WithInsecure())
+	opts = append(opts, grpc.WithBlock())
+	conn, _ := grpc.Dial("localhost:8001", opts...)
+	defer conn.Close()
+	client := pb.NewClockClient(conn)
+	registerwithClock(client)
+
 }
