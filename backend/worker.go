@@ -3,11 +3,10 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
-	"strconv"
 
 	"google.golang.org/grpc"
 
@@ -17,10 +16,18 @@ import (
 
 //Global Variable!!!!
 var assignedCases []Case
+var workerID int
 
 type Case struct {
-	CaseID int
-	State  string //State is the current case state
+	CaseID   int32
+	State    string //State is the current case state
+	Assignee int
+}
+
+type Worker struct {
+	Name   string //Generated from a list of names
+	FaceID int    //Icon for worker face
+	ID     int    //Assigned worker ID
 }
 
 func calcNextTick() {
@@ -37,17 +44,18 @@ func calcNextTick() {
 	return
 }
 
-func caseAssign(w http.ResponseWriter, req *http.Request) {
-	vars := mux.Vars(req)
-	caseid, _ := strconv.Atoi(vars["caseid"])
-	c := Case{CaseID: caseid, State: "Assigned"}
-	assignedCases = append(assignedCases, c)
-	log.Println("case assigned: ", caseid)
-	fmt.Fprintf(w, "case accepted %d, assigned cases: %d \n", caseid, len(assignedCases))
+// func caseAssign(w http.ResponseWriter, req *http.Request) {
+// 	vars := mux.Vars(req)
+// 	caseid, _ := strconv.Atoi(vars["caseid"])
 
-	//Trigger next work item recalc
-	return
-}
+// 	c := Case{CaseID: caseid, State: "Assigned"}
+// 	assignedCases = append(assignedCases, c)
+// 	log.Println("case assigned: ", caseid)
+// 	fmt.Fprintf(w, "case accepted %d, assigned cases: %d \n", caseid, len(assignedCases))
+
+// 	//Trigger next work item recalc
+// 	return
+// }
 
 // work on the next assigned thing.
 func tick(w http.ResponseWriter, req *http.Request) {
@@ -85,13 +93,29 @@ func registerwithClock(client pb.ClockClient) {
 	}
 }
 
+type WorkerServer struct {
+	pb.UnimplementedWorkerServer
+}
+
+func newServer() *WorkerServer {
+	s := &WorkerServer{}
+	return s
+}
+
+func (s *WorkerServer) Assign(ctx context.Context, in *pb.Case) (*pb.Response, error) {
+	c := Case{CaseID: in.GetCaseID(), State: "Assigned", Assignee: workerID}
+	assignedCases = append(assignedCases, c)
+	log.Println("Case : %d was assigned", in.GetCaseID())
+	return &pb.Response{Success: true}, nil
+}
+
 func main() {
 	listeningport := flag.String("listen_addr", ":8081", "set the listneing port of the worker. ")
 	flag.Parse()
 
 	r := mux.NewRouter()
-	r.HandleFunc("/assign/{caseid}", caseAssign)
-	r.HandleFunc("/unassign/{caseid}", caseAssign)
+	// r.HandleFunc("/assign/{caseid}", caseAssign)
+	// r.HandleFunc("/unassign/{caseid}", caseAssign)
 	r.HandleFunc("/tick/{ticknum}", tick)
 
 	http.Handle("/", r)
@@ -101,9 +125,23 @@ func main() {
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithInsecure())
 	opts = append(opts, grpc.WithBlock())
-	conn, _ := grpc.Dial("localhost:8001", opts...)
-	defer conn.Close()
-	client := pb.NewClockClient(conn)
-	registerwithClock(client)
+	clock_conn, _ := grpc.Dial("localhost:8000", opts...)
+	defer clock_conn.Close()
+	clock_client := pb.NewClockClient(clock_conn)
+	go registerwithClock(clock_client)
+
+	lis, err := net.Listen("tcp", ":8080")
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+	s := grpc.NewServer()
+	pb.RegisterWorkerServer(s, newServer())
+	log.Printf("server listening at %v", lis.Addr())
+	if err := s.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
+
+	// api_conn, _ := grpc.Dial("localhost:8002")
+	// def api_conn.Close()
 
 }

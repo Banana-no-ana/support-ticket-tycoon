@@ -1,0 +1,31 @@
+//Define relationship between worker and api.
+//Worker is its own server, listening for actions from the server. 
+syntax = "proto3";
+
+option go_package = "github.com/Banana-no-ana/support-ticket-tycoon/backend/protos";
+package worker;
+
+
+message Case {
+    int32 caseID =1 ; 
+}
+
+message Response {
+    bool Success = 1; 
+
+}
+
+//Update message to the case repo
+message CaseUpdate {
+    int32 CaseID = 1; 
+}
+
+message CaseDetail {
+    int32 CaseID = 1; 
+    
+}
+
+service Worker{
+    rpc Assign(Case) returns (Response);
+    rpc Unassign(Case) returns (Response); 
+}

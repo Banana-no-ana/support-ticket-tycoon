@@ -64,6 +64,7 @@ func newServer() *ClockServer {
 	return s
 }
 
+//TODO: Merge HTTP and RPC ticks together
 func (s *ClockServer) Register(worker *pb.WorkerRegister, stream pb.Clock_RegisterServer) error {
 	for {
 		stream.Send(&pb.Tick{TickNum: tick})
@@ -77,11 +78,12 @@ func main() {
 	r.HandleFunc("/register/{port}", register)
 
 	http.Handle("/", r)
-	log.Println("Starting master clock on port 8000")
+	log.Println("Starting HTTP clock on port 7000")
 	startClock()
-	go http.ListenAndServe(":8000", nil)
+	go http.ListenAndServe(":7000", nil)
 
-	lis, err := net.Listen("tcp", ":8001")
+	log.Println("Starting master clock on port 8000")
+	lis, err := net.Listen("tcp", ":8000")
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
