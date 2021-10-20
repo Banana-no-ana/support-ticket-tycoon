@@ -1,8 +1,11 @@
 ## Getting started
 
 Launch the clock with: go run backend/clock.go
+    Clock listens on HTTP-7000, RPC-8000
 launch a worker with: go run backend/worker.go
 launch an apiserver with: go run backend/api.go
+    API server listens on 8001 on HTTP (Frontend)
+Launch UI starting in /frontend/tstgui/, then flutter run -d chrome
 
 
 register worker with clock: curl http://localhost:8000/8080
@@ -10,4 +13,11 @@ register worker with clock: curl http://localhost:8000/8080
     Now the worker is ticked by the clock
 Create a new case with curl http:localhost:8001/generate
 Assign the worker a case with: curl localhost:8080/{caseid}
+
+
+To generate protos: 
+GO: $ protoc --go_out=. --go_opt=paths=source_relative \
+    --go-grpc_out=. --go-grpc_opt=paths=source_relative \
+    protos/worker.proto
+
 
