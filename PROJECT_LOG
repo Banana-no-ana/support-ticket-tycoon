@@ -13,6 +13,25 @@ Stage 1: Scenario 1 - Manual assign some cases
     * Workers work through a case
     * View cases and workers on a frontend - so we actually can do some assign 
 
+Day 7 (Oct.19) 
+    * 23:12, can't sleep so let's get up and implement the case generate workflow! :)
+    * Woohoo! Can make flutter reach the backend (API server) and create cases now! 
+    * Had to disable CORS via this: https://stackoverflow.com/a/66879350/1322998. When we go to prod we'll need to figure out a way to work with CORS :(
+
+
+Day 6 (Oct.18)
+    * Yay finally figured out how to use flutter to create new cards, populating its contents with a Future<>
+    * This means we now know how to "create new cases"! 
+
+Day 5 (Oct.15)
+    * Yay we can have workers get streaming RPC from the server! 
+    * Should probably write some tests at this point. 
+
+
+Day 4 (Oct.14)
+    * Spent the last couple of days fighting with importing generated go code from proto. That was surprisingly difficult. 
+    * Lesson learned: package name of the .proto doesn't really matter. What does matter is the go_import, that's the folder that it's in.
+
 
 Day 3 (Oct.11)
     * Wanted to get to a UI, but instead made some parts of the API layer.

@@ -69,6 +69,6 @@ func main() {
 	r.HandleFunc("/worker/register", registerWorker) //register a worker
 
 	http.Handle("/", r)
-	go http.ListenAndServe(":8001", nil)
-	http.ListenAndServe(":8002", nil) //Needs to be RPC endpoint.
+	http.ListenAndServe(":8001", nil) //HTTP endpoint: Mostly used for frontend
+
 }

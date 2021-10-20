@@ -10,12 +10,19 @@ message Case {
     int32 caseID = 1; 
 }
 
+message SubscribeMessage{
+    string SubscriberID = 1; 
+}
+
+
 message Response {
-    bool Status = 1; 
+    bool success = 1; 
 }
 
 
 service Assign{
     rpc Assign(Case) returns (Response); 
     rpc UnAssign(Case) returns (Response); 
+    rpc Create(Case) returns (Response);
+    rpc SubscribeToNewCases(SubscribeMessage) returns (stream Case); 
 }
