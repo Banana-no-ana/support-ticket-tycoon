@@ -5,7 +5,7 @@ Launch the clock with: go run backend/clock.go
 launch a worker with: backend/ go run worker.go
     The worker listens to rpc on port 8080. 
 launch an apiserver with: backend/ go run api.go
-    API server listens on 8001 on HTTP (Frontend)
+    API server listens on 8001 on HTTP (Frontend), 8002 on RPC (Backend)
 Launch UI starting in /frontend/tstgui/, then flutter run -d chrome
     UI directly connects with API server on HTTP endpoint
 
@@ -23,5 +23,4 @@ To re-generate protos:
 GO: $ protoc --go_out=. --go_opt=paths=source_relative \
     --go-grpc_out=. --go-grpc_opt=paths=source_relative \
     protos/worker.proto
-
 

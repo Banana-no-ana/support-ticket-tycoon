@@ -74,7 +74,7 @@ func unassign(w http.ResponseWriter, req *http.Request) {
 }
 
 func registerwithClock(client pb.ClockClient) {
-	log.Printf("Connecting to the clock server")
+	log.Println("Connecting to the clock server")
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	stream, err := client.Register(ctx, &pb.WorkerRegister{ID: "worker-1"})
@@ -105,13 +105,18 @@ func newServer() *WorkerServer {
 func (s *WorkerServer) Assign(ctx context.Context, in *pb.Case) (*pb.Response, error) {
 	c := Case{CaseID: in.GetCaseID(), State: "Assigned", Assignee: workerID}
 	assignedCases = append(assignedCases, c)
-	log.Println("Case : %d was assigned", in.GetCaseID())
+	log.Println("Case : ", in.GetCaseID(), "was assigned")
 	return &pb.Response{Success: true}, nil
 }
 
 func main() {
-	listeningport := flag.String("listen_addr", ":8081", "set the listneing port of the worker. ")
+	http_port := flag.String("http_port", ":8081", "set the listneing port of the worker. ")
+	rpc_port := flag.String("rpc_port", ":8080", "set the listneing port of the worker. ")
+	worker_id_flag := flag.Int("worker_id", 1, "Identify the ID of the worker. ")
+
 	flag.Parse()
+
+	workerID = *worker_id_flag
 
 	r := mux.NewRouter()
 	// r.HandleFunc("/assign/{caseid}", caseAssign)
@@ -119,8 +124,8 @@ func main() {
 	r.HandleFunc("/tick/{ticknum}", tick)
 
 	http.Handle("/", r)
-	log.Println("listening on :", *listeningport)
-	go http.ListenAndServe(*listeningport, nil)
+	log.Println("listening on :", *http_port)
+	go http.ListenAndServe(*http_port, nil)
 
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithInsecure())
@@ -130,13 +135,13 @@ func main() {
 	clock_client := pb.NewClockClient(clock_conn)
 	go registerwithClock(clock_client)
 
-	lis, err := net.Listen("tcp", ":8080")
+	lis, err := net.Listen("tcp", *rpc_port)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	s := grpc.NewServer()
 	pb.RegisterWorkerServer(s, newServer())
-	log.Printf("server listening at %v", lis.Addr())
+	log.Printf("Worker %d started at %v", workerID, lis.Addr())
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}

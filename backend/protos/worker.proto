@@ -25,7 +25,19 @@ message CaseDetail {
     
 }
 
+message RegistrationRequst {
+    string RegRequest =1; 
+}
+
+message RegistrationResponse {
+    string workerID =1; 
+}
+
 service Worker{
     rpc Assign(Case) returns (Response);
     rpc Unassign(Case) returns (Response); 
+}
+
+service API {
+    rpc Register(RegistrationRequst) returns (RegistrationResponse); 
 }

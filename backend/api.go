@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"context"
 
@@ -22,18 +23,20 @@ import (
 )
 
 var cases []Case
+var workers []Worker
 var nextCaseId int //TODO: Change to use closure instead
+var nextWorkerId int = 1
+
+type Worker struct {
+	WorkerID int    //Assigned worker ID
+	Name     string //Generated from a list of names
+	FaceID   int    //Icon for worker face
+}
 
 type Case struct {
 	CaseID   int
 	State    string //State is the current case state
 	Assignee int    //worker UID.
-}
-
-type Worker struct {
-	Name   string //Generated from a list of names
-	FaceID int    //Icon for worker face
-	ID     int    //Assigned worker ID
 }
 
 func generate(w http.ResponseWriter, req *http.Request) {
@@ -48,7 +51,7 @@ func generate(w http.ResponseWriter, req *http.Request) {
 	nextCaseId++
 }
 
-func list(w http.ResponseWriter, req *http.Request) {
+func listCases(w http.ResponseWriter, req *http.Request) {
 	b, err := json.Marshal(cases)
 	if err != nil {
 		log.Fatal("Failed to marshal caseID: ", nextCaseId)
@@ -58,7 +61,16 @@ func list(w http.ResponseWriter, req *http.Request) {
 
 func assign(w http.ResponseWriter, req *http.Request) {
 	//TODO: Unassign from current assignee
-	//TODO: FILL in the HTTP request portion
+
+	if err := req.ParseForm(); err != nil {
+		log.Println(w, "ParseForm() err: %v", err)
+		return
+	}
+
+	form_caseID, _ := strconv.Atoi(req.FormValue("caseid"))
+	form_caseID32 := int32(form_caseID)
+	// wtfForm, _ := req.FormValue(("caseid"))
+	// log.Println(wtfForm)
 
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithInsecure())
@@ -69,9 +81,10 @@ func assign(w http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	worker_client := pb.NewWorkerClient(worker_conn)
-	result, _ := worker_client.Assign(ctx, &pb.Case{CaseID: 1})
+	result, _ := worker_client.Assign(ctx, &pb.Case{CaseID: form_caseID32})
 	if result.GetSuccess() {
-		log.Println("Assigning case 1 was successful")
+		log.Println("Assigning case ", form_caseID32, " was successful")
+		fmt.Fprintf(w, "Assigning case %d was successful", form_caseID32)
 	}
 
 }
@@ -86,16 +99,37 @@ func registerWorker(w http.ResponseWriter, req *http.Request) {
 	//TODO implement registering worker with the API server.
 }
 
+func listWorkers(w http.ResponseWriter, req *http.Request) {
+	b, err := json.Marshal(workers)
+	if err != nil {
+		log.Fatal("Failed to marshal caseID: ", nextCaseId)
+	}
+	fmt.Fprintf(w, string(b))
+}
+
+func createWorker(w http.ResponseWriter, req *http.Request) {
+	// Create a new program? Most people would do go routines no?
+
+	worker := Worker{WorkerID: nextWorkerId, FaceID: 1, Name: "Ban"}
+	nextWorkerId++
+
+	workers = append(workers, worker)
+
+}
+
 func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/case/assign", assign)        //Assign a case to a worker. Must be a post request
-	r.HandleFunc("/case/list", list)            //List all cases and their statuses
+	r.HandleFunc("/case/list", listCases)       //List all cases and their statuses
 	r.HandleFunc("/case/create", generate)      //generate new case and return a case ID.
 	r.HandleFunc("/case/get/{caseid}", getcase) //get info of a case.
 
-	r.HandleFunc("/worker/register", registerWorker) //register a worker
+	// r.HandleFunc("/worker/register", registerWorker) //register a worker. Don't need this
+	r.HandleFunc("/worker/list", listWorkers)    // Expected to be called by the frontend to list all the workers.
+	r.HandleFunc("/worker/create", createWorker) // Expected to be called by the frontend to list all the workers.
 
 	http.Handle("/", r)
+	log.Println("Listening on ", ":8081")
 	http.ListenAndServe(":8001", nil) //HTTP endpoint: Mostly used for frontend
 
 }
