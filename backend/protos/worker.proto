@@ -37,7 +37,3 @@ service Worker{
     rpc Assign(Case) returns (Response);
     rpc Unassign(Case) returns (Response); 
 }
-
-service API {
-    rpc Register(RegistrationRequst) returns (RegistrationResponse); 
-}

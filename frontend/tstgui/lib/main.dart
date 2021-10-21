@@ -10,7 +10,7 @@ void main() {
 class Case {
   final int CaseID;
   final String State;     //Case State
-  final String Assignee;  //Worker UID
+  final int Assignee;  //Worker UID
 
   Case({
     required this.CaseID,
@@ -50,11 +50,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Scenario 0',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'Scenario 0'),
     );
   }
 }
@@ -68,7 +68,8 @@ class NewCaseCard extends StatelessWidget{
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return SizedBox(
+        height: 30, 
         child: FutureBuilder<Case>(
         future: futureCase,
         builder: (context, snapshot) {
@@ -76,7 +77,7 @@ class NewCaseCard extends StatelessWidget{
             if (snapshot.hasData) {
               return Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[Text(snapshot.data!.CaseID.toString())],
+                children: <Widget>[Text("Case " + snapshot.data!.CaseID.toString())],
               );
             }
           }
@@ -91,6 +92,7 @@ class NewCaseCard extends StatelessWidget{
       )); 
   }
 }
+
 
 
 class MyHomePage extends StatefulWidget {
@@ -110,22 +112,24 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: Center(
-        child: Column(children: [
-          Column(
-            children: newCases,
-          ), 
-          ElevatedButton(
+      body: Row(
+        children: [
+          Align(alignment: Alignment.topLeft, 
+          child: Column(children: [
+            ElevatedButton(
             child: const Text('Generate Case'),
             onPressed: () {
               setState(() {
                 newCases.add(NewCaseCard(futureCase: createCase()));
-              });
-            },
-          ),
-          ], 
-        )
-     )
-    );
+                });
+              },
+            ),          
+            Column( children: newCases,), 
+            ]),),
+          Expanded(child:Text("Workers and Cases"),),         
+          Align(alignment: Alignment.topRight,
+            child: Text("Manager"),), 
+      ], )
+    );      
   }
 }

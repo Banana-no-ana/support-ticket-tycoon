@@ -12,6 +12,9 @@ Launch UI starting in /frontend/tstgui/, then flutter run -d chrome
 
 Create a case in the API server: 
     http://localhost:8001/case/create
+Create a worker with the API server:
+    http://localhost:8001/worker/create
+
 
 
 Assign case directly with API server: 

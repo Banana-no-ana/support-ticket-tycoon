@@ -16,7 +16,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-//Global Variable!!!!
+//Global Variables!!!!
 var assignedCases []Case
 var workerID int
 
@@ -112,8 +112,8 @@ func (s *WorkerServer) Assign(ctx context.Context, in *pb.Case) (*pb.Response, e
 }
 
 func main() {
-	http_port := flag.String("http_port", ":8081", "set the listneing port of the worker. ")
-	rpc_port := flag.String("rpc_port", ":8080", "set the listneing port of the worker. ")
+	http_port := flag.String("http_port", ":9000", "set the listneing port of the worker. ")
+	rpc_port := flag.String("rpc_port", ":10000", "set the listneing port of the worker. ")
 	worker_id_flag := flag.Int("worker_id", 1, "Identify the ID of the worker. ")
 
 	flag.Parse()
