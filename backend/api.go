@@ -19,6 +19,8 @@ import (
 	pb "github.com/Banana-no-ana/support-ticket-tycoon/backend/protos"
 	"google.golang.org/grpc"
 
+	"os/exec"
+
 	"github.com/gorilla/mux"
 )
 
@@ -110,10 +112,23 @@ func listWorkers(w http.ResponseWriter, req *http.Request) {
 func createWorker(w http.ResponseWriter, req *http.Request) {
 	// Create a new program? Most people would do go routines no?
 
+	log.Println("Starting worker: ", nextWorkerId)
 	worker := Worker{WorkerID: nextWorkerId, FaceID: 1, Name: "Ban"}
-	nextWorkerId++
+
+	n := "-worker_id=" + strconv.Itoa(nextWorkerId)
+	rpc_port := "-rpc_port=:" + strconv.Itoa(10000+nextWorkerId)
+	http_port := "-http_port=:" + strconv.Itoa(9000+nextWorkerId)
+	cmd := exec.Command("go", "run", "worker.go", n, rpc_port, http_port)
+	// log.Println(cmd.String())
+
+	err := cmd.Start()
+	// err := cmd.Run()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	workers = append(workers, worker)
+	nextWorkerId++
 
 }
 
@@ -129,7 +144,7 @@ func main() {
 	r.HandleFunc("/worker/create", createWorker) // Expected to be called by the frontend to list all the workers.
 
 	http.Handle("/", r)
-	log.Println("Listening on ", ":8081")
+	log.Println("Listening on ", ":8001")
 	http.ListenAndServe(":8001", nil) //HTTP endpoint: Mostly used for frontend
 
 }

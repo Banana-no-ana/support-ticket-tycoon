@@ -3,10 +3,12 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"io"
 	"log"
 	"net"
 	"net/http"
+	"strconv"
 
 	"google.golang.org/grpc"
 
@@ -44,18 +46,18 @@ func calcNextTick() {
 	return
 }
 
-// func caseAssign(w http.ResponseWriter, req *http.Request) {
-// 	vars := mux.Vars(req)
-// 	caseid, _ := strconv.Atoi(vars["caseid"])
+func caseAssign(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	caseid, _ := strconv.Atoi(vars["caseid"])
 
-// 	c := Case{CaseID: caseid, State: "Assigned"}
-// 	assignedCases = append(assignedCases, c)
-// 	log.Println("case assigned: ", caseid)
-// 	fmt.Fprintf(w, "case accepted %d, assigned cases: %d \n", caseid, len(assignedCases))
+	c := Case{CaseID: int32(caseid), State: "Assigned"}
+	assignedCases = append(assignedCases, c)
+	log.Println("case assigned: ", caseid)
+	fmt.Fprintf(w, "case accepted %d, assigned cases: %d \n", caseid, len(assignedCases))
 
-// 	//Trigger next work item recalc
-// 	return
-// }
+	//Trigger next work item recalc
+	return
+}
 
 // work on the next assigned thing.
 func tick(w http.ResponseWriter, req *http.Request) {
@@ -119,7 +121,7 @@ func main() {
 	workerID = *worker_id_flag
 
 	r := mux.NewRouter()
-	// r.HandleFunc("/assign/{caseid}", caseAssign)
+	r.HandleFunc("/assign/{caseid}", caseAssign)
 	// r.HandleFunc("/unassign/{caseid}", caseAssign)
 	r.HandleFunc("/tick/{ticknum}", tick)
 
