@@ -78,46 +78,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class NewCaseCard extends StatelessWidget {
-  final Future<Case> futureCase;
-  Case cardCase = Case(CaseID: 0, State: "Stub", Assignee: 0);
-
-  NewCaseCard({Key? key, required this.futureCase}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Draggable(
-      data: cardCase, 
-      feedback: SizedBox(height: 40, width: 100, child: Text("Assign Case"), ),
-      childWhenDragging: SizedBox(height: 30,  child: Text("This is the Case!") ),
-      child: SizedBox(
-        height: 30,
-        child: FutureBuilder<Case>(
-          future: futureCase,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.done) {
-              if (snapshot.hasData) {
-                cardCase = snapshot.data as Case; 
-                return Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Text("Case " + snapshot.data!.CaseID.toString())
-                  ],
-                );
-              }
-            } else if (snapshot.connectionState == ConnectionState.waiting) {
-              return Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[Text("Case being created")],
-              );
-            }
-            return const CircularProgressIndicator();
-          },
-        )),
-    ); 
-    
-  }
-}
 
 class Worker {
   final int WorkerID; //Assigned worker ID
@@ -149,7 +109,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  var newCases = <NewCaseCard>[];
+  var newCases = <NewCaseCard2>[];
   late Future<List<Worker>> workers;
 
   @override
@@ -173,7 +133,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   child: const Text('Generate Case'),
                   onPressed: () {
                     setState(() {
-                      newCases.add(NewCaseCard(futureCase: createCase()));
+                      newCases.add(NewCaseCard2(futureCase: createCase()));
                     });
                   },
                 ),
@@ -246,7 +206,6 @@ class _WorkerCardState extends State<WorkerCard> {
               child: Column(
                 children: [
                   Text('#' + widget.worker.WorkerID.toString() + ' ' + widget.worker.Name),
-                  CaseCard(), 
                 ],
               )
             );
@@ -263,19 +222,59 @@ class _WorkerCardState extends State<WorkerCard> {
 
 
 class CaseCard extends StatefulWidget {
-  const CaseCard({ Key? key }) : super(key: key);
+  final Case cardCase; 
+
+  CaseCard({ Key? key, required this.cardCase}) : super(key: key);
 
   @override
   _CaseCardState createState() => _CaseCardState();
 }
 
 class _CaseCardState extends State<CaseCard> {
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 100, 
-      height: 20, 
-      child: Text("Case #")
+    return Draggable(
+      data: widget.cardCase,
+      feedback: SizedBox(height: 40, width: 100, child: Text("Assign to"), ),
+      childWhenDragging: SizedBox(height: 40,  child: Text("Assign Case: " + widget.cardCase.CaseID.toString()) ),
+      child: SizedBox(
+        width: 100, 
+        height: 40, 
+        child: Column(children: [
+          Center(child: Text("Case : " + widget.cardCase.CaseID.toString())), 
+        ],) ),
+    ); 
+  }
+}
+
+class NewCaseCard2 extends StatelessWidget {
+  final Future<Case> futureCase;
+
+  const NewCaseCard2({ Key? key, required this.futureCase }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 30,
+      child: FutureBuilder<Case>(
+        future: futureCase,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            if (snapshot.hasData) {
+              return CaseCard(cardCase: snapshot.data!); 
+             }
+          }
+          else if (snapshot.connectionState == ConnectionState.waiting) {
+            return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[Text("Case being created")],
+              );
+          }
+          return const CircularProgressIndicator();
+        },
+      ), 
+
     );
   }
 }
