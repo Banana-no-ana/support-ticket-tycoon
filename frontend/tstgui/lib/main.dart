@@ -6,11 +6,10 @@ void main() {
   runApp(const MyApp());
 }
 
-
 class Case {
   final int CaseID;
-  final String State;     //Case State
-  final int Assignee;  //Worker UID
+  final String State; //Case State
+  final int Assignee; //Worker UID
 
   Case({
     required this.CaseID,
@@ -27,10 +26,30 @@ class Case {
   }
 }
 
+Future<List<Worker>> getWorkers() async {
+  final response = await http.get(
+    Uri.parse('http://localhost:8001/worker/list'),
+  );
+
+  late List<Worker> workers = [];
+
+  if (response.statusCode == 200) {
+    jsonDecode(response.body).forEach((element) {
+      workers.add(Worker.fromJson(element));
+    });
+
+    return workers;
+  } else {
+    // If the server did not return a 200 OK response,
+    // then throw an exception.
+    throw Exception('Failed to get Case');
+  }
+}
+
 Future<Case> createCase() async {
-  final response = await http
-      .get(Uri.parse('http://localhost:8001/case/create'), 
-      ); 
+  final response = await http.get(
+    Uri.parse('http://localhost:8001/case/create'),
+  );
 
   if (response.statusCode == 200) {
     // If the server did return a 200 OK response,
@@ -59,40 +78,58 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class NewCaseCard extends StatelessWidget{
+class NewCaseCard extends StatelessWidget {
+  final Future<Case> futureCase;
 
-  final Future<Case> futureCase; 
-
-  NewCaseCard({Key? key, 
-      required this.futureCase}) : super(key:key);   
+  NewCaseCard({Key? key, required this.futureCase}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-        height: 30, 
+        height: 30,
         child: FutureBuilder<Case>(
-        future: futureCase,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            if (snapshot.hasData) {
+          future: futureCase,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.done) {
+              if (snapshot.hasData) {
+                return Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Text("Case " + snapshot.data!.CaseID.toString())
+                  ],
+                );
+              }
+            } else if (snapshot.connectionState == ConnectionState.waiting) {
               return Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[Text("Case " + snapshot.data!.CaseID.toString())],
-              );
-            }
-          }
-          else if (snapshot.connectionState == ConnectionState.waiting) {
-            return Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[Text("Case being created")],
               );
-          }
-          return const CircularProgressIndicator();
-        },
-      )); 
+            }
+            return const CircularProgressIndicator();
+          },
+        ));
   }
 }
 
+class Worker {
+  final int WorkerID; //Assigned worker ID
+  final String Name; //Generated from a list of names
+  final int FaceID; //Icon for worker face
+
+  Worker({
+    required this.WorkerID,
+    required this.Name,
+    required this.FaceID,
+  });
+
+  factory Worker.fromJson(Map<String, dynamic> json) {
+    return Worker(
+      WorkerID: json['WorkerID'],
+      Name: json['Name'],
+      FaceID: json['FaceID'],
+    );
+  }
+}
 
 
 class MyHomePage extends StatefulWidget {
@@ -104,32 +141,95 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  var newCases = <NewCaseCard>[]; 
+  var newCases = <NewCaseCard>[];
+  late Future<List<Worker>> workers;
+
+  @override
+  void initState() {
+    super.initState();
+    workers = getWorkers();    
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-      ),
-      body: Row(
-        children: [
-          Align(alignment: Alignment.topLeft, 
-          child: Column(children: [
-            ElevatedButton(
-            child: const Text('Generate Case'),
-            onPressed: () {
-              setState(() {
-                newCases.add(NewCaseCard(futureCase: createCase()));
-                });
-              },
-            ),          
-            Column( children: newCases,), 
-            ]),),
-          Expanded(child:Text("Workers and Cases"),),         
-          Align(alignment: Alignment.topRight,
-            child: Text("Manager"),), 
-      ], )
-    );      
+        appBar: AppBar(
+          title: Text(widget.title),
+        ),
+        body: Row(
+          children: [
+            Align(
+              alignment: Alignment.topLeft,
+              child: Column(children: [
+                ElevatedButton(
+                  child: const Text('Generate Case'),
+                  onPressed: () {
+                    setState(() {
+                      newCases.add(NewCaseCard(futureCase: createCase()));
+                    });
+                  },
+                ),
+                Column(
+                  children: newCases,
+                ),
+              ]),
+            ),
+            Expanded(
+              child: FutureBuilder<List<Worker>>(
+                future: workers,
+                builder: (context, AsyncSnapshot snapshot) {
+                  if (snapshot.data != null) {
+                    return _workerGridView(snapshot.data);
+                  } else
+                  {
+                    return Center(child: CircularProgressIndicator());
+                  }                  
+                },
+              ),
+            ),
+            Align(
+              alignment: Alignment.topRight,
+              child: Text("Manager"),
+            ),
+          ],
+        ));
+  }
+}
+
+GridView _workerGridView(List<Worker> data) {
+  return GridView.builder(
+    gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+        crossAxisSpacing: 15, maxCrossAxisExtent: 5),
+    itemCount: data.length,
+    padding: EdgeInsets.all(10),
+    itemBuilder: (BuildContext context, int index) {
+      return WorkerCard(worker: data[index],); 
+    }
+  );
+}
+
+
+class WorkerCard extends StatefulWidget {
+  final Worker worker;
+
+  const WorkerCard({Key? key, required this.worker}) : super(key: key);
+
+  @override
+  _WorkerCardState createState() => _WorkerCardState();
+}
+
+class _WorkerCardState extends State<WorkerCard> {
+  List<Case> cases = [];
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      child: Text('#' + widget.worker.WorkerID.toString() + ' ' + widget.worker.Name)
+    );
   }
 }
