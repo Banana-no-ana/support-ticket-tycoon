@@ -80,18 +80,24 @@ class MyApp extends StatelessWidget {
 
 class NewCaseCard extends StatelessWidget {
   final Future<Case> futureCase;
+  Case cardCase = Case(CaseID: 0, State: "Stub", Assignee: 0);
 
   NewCaseCard({Key? key, required this.futureCase}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return Draggable(
+      data: cardCase, 
+      feedback: SizedBox(height: 40, width: 100, child: Text("Assign Case"), ),
+      childWhenDragging: SizedBox(height: 30,  child: Text("This is the Case!") ),
+      child: SizedBox(
         height: 30,
         child: FutureBuilder<Case>(
           future: futureCase,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.done) {
               if (snapshot.hasData) {
+                cardCase = snapshot.data as Case; 
                 return Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
@@ -107,7 +113,9 @@ class NewCaseCard extends StatelessWidget {
             }
             return const CircularProgressIndicator();
           },
-        ));
+        )),
+    ); 
+    
   }
 }
 
@@ -199,7 +207,7 @@ class _MyHomePageState extends State<MyHomePage> {
 GridView _workerGridView(List<Worker> data) {
   return GridView.builder(
     gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-        crossAxisSpacing: 15, maxCrossAxisExtent: 5),
+        crossAxisSpacing: 20, maxCrossAxisExtent: 400, mainAxisExtent: 300,  mainAxisSpacing: 20),
     itemCount: data.length,
     padding: EdgeInsets.all(10),
     itemBuilder: (BuildContext context, int index) {
@@ -228,8 +236,46 @@ class _WorkerCardState extends State<WorkerCard> {
 
   @override
   Widget build(BuildContext context) {
+      return DragTarget(
+        builder: (BuildContext context, List<dynamic> accepted,
+          List<dynamic> rejected) {
+        return Container(
+              width: 30,
+              height: 30, 
+              color: Colors.amber,
+              child: Column(
+                children: [
+                  Text('#' + widget.worker.WorkerID.toString() + ' ' + widget.worker.Name),
+                  CaseCard(), 
+                ],
+              )
+            );
+      }, 
+      onAccept: (Case draggedCase) {
+        setState(() {
+          cases.add(draggedCase);  
+        });
+        
+      },
+    );
+  }
+}
+
+
+class CaseCard extends StatefulWidget {
+  const CaseCard({ Key? key }) : super(key: key);
+
+  @override
+  _CaseCardState createState() => _CaseCardState();
+}
+
+class _CaseCardState extends State<CaseCard> {
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      child: Text('#' + widget.worker.WorkerID.toString() + ' ' + widget.worker.Name)
+      width: 100, 
+      height: 20, 
+      child: Text("Case #")
     );
   }
 }
