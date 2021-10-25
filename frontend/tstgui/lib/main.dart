@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -109,7 +110,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  var newCases = <NewCaseCard2>[];
+  var newCases = <NewCaseCard>[];
   late Future<List<Worker>> workers;
 
   @override
@@ -133,7 +134,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   child: const Text('Generate Case'),
                   onPressed: () {
                     setState(() {
-                      newCases.add(NewCaseCard2(futureCase: createCase()));
+                      newCases.add(NewCaseCard(futureCase: createCase(),));
                     });
                   },
                 ),
@@ -187,11 +188,15 @@ class WorkerCard extends StatefulWidget {
 }
 
 class _WorkerCardState extends State<WorkerCard> {
-  List<Case> cases = [];
+  List<CaseCard> workerCases = []; 
 
   @override
   void initState() {
     super.initState();
+  }
+
+  void removeDragged(Case draggedCase) {
+    workerCases.removeWhere((e) => e.cardCase == draggedCase); 
   }
 
   @override
@@ -206,15 +211,19 @@ class _WorkerCardState extends State<WorkerCard> {
               child: Column(
                 children: [
                   Text('#' + widget.worker.WorkerID.toString() + ' ' + widget.worker.Name),
+                  Column(
+                    children: workerCases,
+                  ), 
                 ],
               )
             );
       }, 
       onAccept: (Case draggedCase) {
         setState(() {
-          cases.add(draggedCase);  
+          var newCase = CaseCard(cardCase: draggedCase, 
+            onDragComplete: () => {removeDragged(draggedCase)}); 
+          workerCases.add(newCase); 
         });
-        
       },
     );
   }
@@ -223,8 +232,9 @@ class _WorkerCardState extends State<WorkerCard> {
 
 class CaseCard extends StatefulWidget {
   final Case cardCase; 
+  final Function onDragComplete; 
 
-  CaseCard({ Key? key, required this.cardCase}) : super(key: key);
+  CaseCard({ Key? key, required this.cardCase, required this.onDragComplete}) : super(key: key);
 
   @override
   _CaseCardState createState() => _CaseCardState();
@@ -236,8 +246,17 @@ class _CaseCardState extends State<CaseCard> {
   Widget build(BuildContext context) {
     return Draggable(
       data: widget.cardCase,
-      feedback: SizedBox(height: 40, width: 100, child: Text("Assign to"), ),
-      childWhenDragging: SizedBox(height: 40,  child: Text("Assign Case: " + widget.cardCase.CaseID.toString()) ),
+      feedback: FittedBox(
+          fit: BoxFit.contain,
+          child: Text("Assign to", 
+          textAlign: TextAlign.justify,
+          style: TextStyle(
+            color: Colors.black12,
+            fontWeight: FontWeight.bold,
+          ),),
+        ), 
+      childWhenDragging: SizedBox(height: 40,   child: Text("Assign Case: " + widget.cardCase.CaseID.toString()) ),
+      onDragCompleted: () => {widget.onDragComplete()}, 
       child: SizedBox(
         width: 100, 
         height: 40, 
@@ -248,10 +267,12 @@ class _CaseCardState extends State<CaseCard> {
   }
 }
 
-class NewCaseCard2 extends StatelessWidget {
+class NewCaseCard extends StatelessWidget {
   final Future<Case> futureCase;
 
-  const NewCaseCard2({ Key? key, required this.futureCase }) : super(key: key);
+  const NewCaseCard({ Key? key, required this.futureCase}) : super(key: key);
+
+  void EmptyFunction() {}
 
   @override
   Widget build(BuildContext context) {
@@ -262,7 +283,8 @@ class NewCaseCard2 extends StatelessWidget {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
             if (snapshot.hasData) {
-              return CaseCard(cardCase: snapshot.data!); 
+              return CaseCard(cardCase: snapshot.data!
+              , onDragComplete: EmptyFunction,); 
              }
           }
           else if (snapshot.connectionState == ConnectionState.waiting) {
