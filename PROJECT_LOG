@@ -15,8 +15,7 @@ Stage 1: Scenario 1 - Manual assign some cases
 
 
 Day 11 (Oct.24 - Sunday)
-    * Frontend Draggable kinda working. Removing from the previous place still kinda tricky. I'll Figure it out eventually
-
+    * Finished implementing dragging cases (in the UI at least.)!!! Drags to a worker removes from the original place!
 
 Day 10 (Oct.22)
     * Figuring out flutter draggables. Not perfect yet, but we're starting to get there. 

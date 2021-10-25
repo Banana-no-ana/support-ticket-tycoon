@@ -110,8 +110,12 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  var newCases = <NewCaseCard>[];
+  
   late Future<List<Worker>> workers;
+
+  void removeCaseCard() {
+    
+  }
 
   @override
   void initState() {
@@ -127,21 +131,9 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         body: Row(
           children: [
-            Align(
+            const Align(
               alignment: Alignment.topLeft,
-              child: Column(children: [
-                ElevatedButton(
-                  child: const Text('Generate Case'),
-                  onPressed: () {
-                    setState(() {
-                      newCases.add(NewCaseCard(futureCase: createCase(),));
-                    });
-                  },
-                ),
-                Column(
-                  children: newCases,
-                ),
-              ]),
+              child: NewCaseColumn(),
             ),
             Expanded(
               child: FutureBuilder<List<Worker>>(
@@ -151,12 +143,12 @@ class _MyHomePageState extends State<MyHomePage> {
                     return _workerGridView(snapshot.data);
                   } else
                   {
-                    return Center(child: CircularProgressIndicator());
+                    return const Center(child: CircularProgressIndicator());
                   }                  
                 },
               ),
             ),
-            Align(
+            const Align(
               alignment: Alignment.topRight,
               child: Text("Manager"),
             ),
@@ -167,7 +159,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
 GridView _workerGridView(List<Worker> data) {
   return GridView.builder(
-    gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+    gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
         crossAxisSpacing: 20, maxCrossAxisExtent: 400, mainAxisExtent: 300,  mainAxisSpacing: 20),
     itemCount: data.length,
     padding: EdgeInsets.all(10),
@@ -175,6 +167,44 @@ GridView _workerGridView(List<Worker> data) {
       return WorkerCard(worker: data[index],); 
     }
   );
+}
+
+
+class NewCaseColumn extends StatefulWidget {
+  const NewCaseColumn({ Key? key }) : super(key: key);
+
+  @override
+  _NewCasColumnState createState() => _NewCasColumnState();
+}
+
+class _NewCasColumnState extends State<NewCaseColumn> {
+  var newCases = <NewCaseCard>[];
+
+  void removeCase(Case c) {
+    newCases.removeWhere((element) => element.myCase.CaseID == c.CaseID); 
+    setState(() {
+      
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(children: [
+      ElevatedButton(
+        child: const Text('Generate Case'),
+        onPressed: () {
+          setState(() {
+            newCases.add(
+              NewCaseCard(futureCase: createCase(), removeFunction: (Case e) => {removeCase(e)}),
+            );
+          });
+        },
+      ),
+      Column(
+        children: newCases,
+      ),
+    ]);
+  }
 }
 
 
@@ -195,8 +225,11 @@ class _WorkerCardState extends State<WorkerCard> {
     super.initState();
   }
 
-  void removeDragged(Case draggedCase) {
-    workerCases.removeWhere((e) => e.cardCase == draggedCase); 
+  void removeDragged(CaseCard toRemove) {
+    workerCases.removeWhere((e) => e.cardCase.CaseID == toRemove.cardCase.CaseID); 
+    setState(() {
+      
+    });
   }
 
   @override
@@ -218,11 +251,12 @@ class _WorkerCardState extends State<WorkerCard> {
               )
             );
       }, 
-      onAccept: (Case draggedCase) {
+      onAccept: (CaseCard draggedCard) {
         setState(() {
-          var newCase = CaseCard(cardCase: draggedCase, 
-            onDragComplete: () => {removeDragged(draggedCase)}); 
+          var newCase = CaseCard(cardCase: draggedCard.cardCase, 
+            onDragComplete: () => {removeDragged(draggedCard)}); 
           workerCases.add(newCase); 
+          draggedCard.onDragComplete();
         });
       },
     );
@@ -245,7 +279,7 @@ class _CaseCardState extends State<CaseCard> {
   @override
   Widget build(BuildContext context) {
     return Draggable(
-      data: widget.cardCase,
+      data: widget,
       feedback: FittedBox(
           fit: BoxFit.contain,
           child: Text("Assign to", 
@@ -267,24 +301,31 @@ class _CaseCardState extends State<CaseCard> {
   }
 }
 
-class NewCaseCard extends StatelessWidget {
+class NewCaseCard extends StatefulWidget {
   final Future<Case> futureCase;
+  final Function removeFunction; 
+  late Case myCase; 
 
-  const NewCaseCard({ Key? key, required this.futureCase}) : super(key: key);
+  NewCaseCard({ Key? key, required this.futureCase
+  , required this.removeFunction}) : super(key: key);
 
-  void EmptyFunction() {}
+  @override
+  State<NewCaseCard> createState() => _NewCaseCardState();
+}
 
+class _NewCaseCardState extends State<NewCaseCard> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       height: 30,
       child: FutureBuilder<Case>(
-        future: futureCase,
+        future: widget.futureCase,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
             if (snapshot.hasData) {
+              widget.myCase = snapshot.data!; 
               return CaseCard(cardCase: snapshot.data!
-              , onDragComplete: EmptyFunction,); 
+              , onDragComplete: () => {widget.removeFunction(snapshot.data!)} ,); 
              }
           }
           else if (snapshot.connectionState == ConnectionState.waiting) {
