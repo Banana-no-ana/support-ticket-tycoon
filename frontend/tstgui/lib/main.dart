@@ -289,13 +289,18 @@ class _CaseCardState extends State<CaseCard> {
             fontWeight: FontWeight.bold,
           ),),
         ), 
-      childWhenDragging: SizedBox(height: 40,   child: Text("Assign Case: " + widget.cardCase.CaseID.toString()) ),
+      childWhenDragging: SizedBox(height: 100,   child: Text("Assign Case: " + widget.cardCase.CaseID.toString()) ),
       onDragCompleted: () => {widget.onDragComplete()}, 
       child: SizedBox(
-        width: 100, 
-        height: 40, 
-        child: Column(children: [
-          Center(child: Text("Case : " + widget.cardCase.CaseID.toString())), 
+        width: 250, 
+        height: 100, 
+        child: Row(
+          children: [
+            Align(alignment: Alignment.centerLeft, child: Image.network('http://localhost:80/1_5.png',),), 
+            Container(width:4), 
+            Container(width: 1, color: Colors.blueGrey), 
+            Container(width:4),
+            Center(child: Text("Case : " + widget.cardCase.CaseID.toString())), 
         ],) ),
     ); 
   }

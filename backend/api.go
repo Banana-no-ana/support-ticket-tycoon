@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"strconv"
 
@@ -36,13 +37,16 @@ type Worker struct {
 }
 
 type Case struct {
-	CaseID   int
-	State    string //State is the current case state
-	Assignee int    //worker UID.
+	CaseID            int
+	State             string //State is the current case state
+	Assignee          int    //worker UID.
+	CustomerID        int    //Which customer is it
+	CustomerSentiment int    //Customer's current sentiment of the case (range between 1, 2, 3, 4, 5 (5 being happy))
 }
 
 func generate(w http.ResponseWriter, req *http.Request) {
-	c := Case{CaseID: nextCaseId, State: "New", Assignee: 0}
+	c := Case{CaseID: nextCaseId, State: "New", Assignee: 0,
+		CustomerID: rand.Intn(5) + 1, CustomerSentiment: 3}
 	cases = append(cases, c)
 	log.Println("case created: ", nextCaseId)
 	b, err := json.Marshal(c)
