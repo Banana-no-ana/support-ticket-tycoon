@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -112,10 +111,6 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   
   late Future<List<Worker>> workers;
-
-  void removeCaseCard() {
-    
-  }
 
   @override
   void initState() {

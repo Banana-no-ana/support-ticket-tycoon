@@ -1,0 +1,53 @@
+{
+    "minCaseDifficulty": 1, 
+    "maxCaseDifficulty": 2,
+    "workers" : [
+        {
+         "WorkerID"   : 1,
+         "Name"       : "Ban", 
+         "FaceID"     : 1, 
+         "Skills"     : {
+            "Troubleshoot" : 3, 
+            "Build"        : 1, 
+            "Architecture" : 4 
+         }
+        }, 
+        {
+            "WorkerID"   : 2,
+            "Name"       : "Michael", 
+            "FaceID"     : 2, 
+            "Skills"     : {
+               "Troubleshoot" : 3, 
+               "Build"        : 3, 
+               "Tech"         : 3,
+               "Environment"  : 3
+            }
+        }, 
+        {
+            "WorkerID"   : 3,
+            "Name"       : "Rosie", 
+            "FaceID"     : 3, 
+            "Skills"     : {
+               "Empathy" : 3, 
+               "Explain"        : 1, 
+               "Tech"         : 1, 
+               "Troubleshoot" : 1, 
+               "Usage"        : 2
+            }
+        }, 
+        {
+            "WorkerID"   : 4,
+            "Name"       : "Ollie", 
+            "FaceID"     : 4, 
+            "Skills"     : {
+               "Troubleshoot" : 1, 
+               "Build"        : 1, 
+               "Tech"         : 1,
+               "Environment"  : 3, 
+               "Usage"        : 1,
+               "Relationship" : 3
+            }
+        }
+    ]
+
+}

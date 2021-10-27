@@ -10,9 +10,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"strconv"
 
 	"context"
@@ -28,12 +30,17 @@ import (
 var cases []Case
 var workers []Worker
 var nextCaseId int //TODO: Change to use closure instead
-var nextWorkerId int = 1
+var nextWorkerId int = 100
+
+type Scenario struct {
+	Workers []Worker `json:"workers"`
+}
 
 type Worker struct {
-	WorkerID int    //Assigned worker ID
-	Name     string //Generated from a list of names
-	FaceID   int    //Icon for worker face
+	WorkerID int            //Assigned worker ID
+	Name     string         //Generated from a list of names
+	FaceID   int            //Icon for worker face
+	Skills   pb.WorkerSkill //Worker's skills
 }
 
 type Case struct {
@@ -92,7 +99,6 @@ func assign(w http.ResponseWriter, req *http.Request) {
 		log.Println("Assigning case ", form_caseID32, " was successful")
 		fmt.Fprintf(w, "Assigning case %d was successful", form_caseID32)
 	}
-
 }
 
 func getcase(w http.ResponseWriter, req *http.Request) {
@@ -113,17 +119,12 @@ func listWorkers(w http.ResponseWriter, req *http.Request) {
 	fmt.Fprintf(w, string(b))
 }
 
-func createWorker(w http.ResponseWriter, req *http.Request) {
-	// Create a new program? Most people would do go routines no?
+func createWorker(w Worker) {
+	rpc_port := "-rpc_port=:" + strconv.Itoa(10000+w.WorkerID)
+	http_port := "-http_port=:" + strconv.Itoa(9000+w.WorkerID)
 
-	log.Println("Starting worker: ", nextWorkerId)
-	worker := Worker{WorkerID: nextWorkerId, FaceID: 1, Name: "Ban"}
-
-	n := "-worker_id=" + strconv.Itoa(nextWorkerId)
-	rpc_port := "-rpc_port=:" + strconv.Itoa(10000+nextWorkerId)
-	http_port := "-http_port=:" + strconv.Itoa(9000+nextWorkerId)
-	cmd := exec.Command("go", "run", "worker.go", n, rpc_port, http_port)
-	// log.Println(cmd.String())
+	log.Println("Creating worker: ", w.WorkerID, rpc_port, http_port)
+	cmd := exec.Command("go", "run", "worker.go", "-worker_id="+string(nextWorkerId), rpc_port, http_port)
 
 	err := cmd.Start()
 	// err := cmd.Run()
@@ -131,8 +132,53 @@ func createWorker(w http.ResponseWriter, req *http.Request) {
 		log.Fatal(err)
 	}
 
-	workers = append(workers, worker)
+	workers = append(workers, w)
+}
+
+func createWorkerRequest(w http.ResponseWriter, req *http.Request) {
+
+	//Create a new worker.
+	log.Println("Starting worker: ", nextWorkerId)
+	worker := Worker{WorkerID: nextWorkerId, FaceID: 1, Name: "Unnamed"}
+	// n := "-worker_id=" + strconv.Itoa(nextWorkerId)
+
+	createWorker(worker)
 	nextWorkerId++
+
+	fmt.Fprintf(w, "Created worker \n")
+
+	logmsg, _ := json.Marshal(worker)
+	fmt.Fprintf(w, string(logmsg))
+}
+
+func loadScenario(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	scenarioid := vars["scenarioid"]
+	f := "../scenarios/s" + scenarioid + ".json"
+
+	log.Println("Loading scenario from: ", f)
+	sceanriofile, err := os.Open(f)
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer sceanriofile.Close()
+
+	bytevalue, _ := ioutil.ReadAll(sceanriofile)
+	var scenario Scenario
+
+	err = json.Unmarshal(bytevalue, &scenario)
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+
+	var numCreatedWorkers int = 0
+	for _, w := range scenario.Workers {
+		createWorker(w)
+		numCreatedWorkers++
+	}
+
+	fmt.Fprintf(w, "Loaded scenario from: "+f+"\n")
+	fmt.Fprintf(w, "Created "+strconv.Itoa(numCreatedWorkers)+" Workers \n")
 
 }
 
@@ -144,8 +190,10 @@ func main() {
 	r.HandleFunc("/case/get/{caseid}", getcase) //get info of a case.
 
 	// r.HandleFunc("/worker/register", registerWorker) //register a worker. Don't need this
-	r.HandleFunc("/worker/list", listWorkers)    // Expected to be called by the frontend to list all the workers.
-	r.HandleFunc("/worker/create", createWorker) // Expected to be called by the frontend to list all the workers.
+	r.HandleFunc("/worker/list", listWorkers)           // Expected to be called by the frontend to list all the workers.
+	r.HandleFunc("/worker/create", createWorkerRequest) // Create workers
+
+	r.HandleFunc("/scenario/load/{scenarioid}", loadScenario) // Create workers
 
 	http.Handle("/", r)
 	log.Println("Listening on ", ":8001")

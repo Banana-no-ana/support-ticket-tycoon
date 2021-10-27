@@ -11,8 +11,8 @@ import (
 
 	"google.golang.org/grpc"
 
-	pb "github.com/Banana-no-ana/support-ticket-tycoon/backend/protos"
 	"github.com/Banana-no-ana/support-ticket-tycoon/backend/clockclient"
+	pb "github.com/Banana-no-ana/support-ticket-tycoon/backend/protos"
 	"github.com/gorilla/mux"
 )
 
@@ -66,6 +66,10 @@ func (s *WorkerServer) Assign(ctx context.Context, in *pb.Case) (*pb.Response, e
 	c := Case{CaseID: in.GetCaseID()}
 	assignedCases = append(assignedCases, c)
 	log.Println("Case : ", in.GetCaseID(), "was assigned")
+	return &pb.Response{Success: true}, nil
+}
+
+func (s *WorkerServer) SetWorkerSkills(context.Context, *pb.WorkerSkill) (*pb.Response, error) {
 	return &pb.Response{Success: true}, nil
 }
 

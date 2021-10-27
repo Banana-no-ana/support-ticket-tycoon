@@ -29,7 +29,7 @@ func (m *Case) Reset()         { *m = Case{} }
 func (m *Case) String() string { return proto.CompactTextString(m) }
 func (*Case) ProtoMessage()    {}
 func (*Case) Descriptor() ([]byte, []int) {
-	return fileDescriptor_worker_7e8bebb011d98deb, []int{0}
+	return fileDescriptor_worker_dc54cec19012dc42, []int{0}
 }
 func (m *Case) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Case.Unmarshal(m, b)
@@ -67,7 +67,7 @@ func (m *Response) Reset()         { *m = Response{} }
 func (m *Response) String() string { return proto.CompactTextString(m) }
 func (*Response) ProtoMessage()    {}
 func (*Response) Descriptor() ([]byte, []int) {
-	return fileDescriptor_worker_7e8bebb011d98deb, []int{1}
+	return fileDescriptor_worker_dc54cec19012dc42, []int{1}
 }
 func (m *Response) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Response.Unmarshal(m, b)
@@ -94,190 +94,139 @@ func (m *Response) GetSuccess() bool {
 	return false
 }
 
-// Update message to the case repo
-type CaseUpdate struct {
-	CaseID               int32    `protobuf:"varint,1,opt,name=CaseID,proto3" json:"CaseID,omitempty"`
+type WorkerSkill struct {
+	Troubleshoot         int32    `protobuf:"varint,1,opt,name=Troubleshoot,proto3" json:"Troubleshoot,omitempty"`
+	Build                int32    `protobuf:"varint,2,opt,name=Build,proto3" json:"Build,omitempty"`
+	Tech                 int32    `protobuf:"varint,3,opt,name=Tech,proto3" json:"Tech,omitempty"`
+	Usage                int32    `protobuf:"varint,4,opt,name=Usage,proto3" json:"Usage,omitempty"`
+	Architecture         int32    `protobuf:"varint,5,opt,name=Architecture,proto3" json:"Architecture,omitempty"`
+	Environment          int32    `protobuf:"varint,6,opt,name=Environment,proto3" json:"Environment,omitempty"`
+	Explain              int32    `protobuf:"varint,7,opt,name=Explain,proto3" json:"Explain,omitempty"`
+	Empathy              int32    `protobuf:"varint,8,opt,name=Empathy,proto3" json:"Empathy,omitempty"`
+	Relationship         int32    `protobuf:"varint,9,opt,name=Relationship,proto3" json:"Relationship,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *CaseUpdate) Reset()         { *m = CaseUpdate{} }
-func (m *CaseUpdate) String() string { return proto.CompactTextString(m) }
-func (*CaseUpdate) ProtoMessage()    {}
-func (*CaseUpdate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_worker_7e8bebb011d98deb, []int{2}
+func (m *WorkerSkill) Reset()         { *m = WorkerSkill{} }
+func (m *WorkerSkill) String() string { return proto.CompactTextString(m) }
+func (*WorkerSkill) ProtoMessage()    {}
+func (*WorkerSkill) Descriptor() ([]byte, []int) {
+	return fileDescriptor_worker_dc54cec19012dc42, []int{2}
 }
-func (m *CaseUpdate) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_CaseUpdate.Unmarshal(m, b)
+func (m *WorkerSkill) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_WorkerSkill.Unmarshal(m, b)
 }
-func (m *CaseUpdate) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_CaseUpdate.Marshal(b, m, deterministic)
+func (m *WorkerSkill) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_WorkerSkill.Marshal(b, m, deterministic)
 }
-func (dst *CaseUpdate) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CaseUpdate.Merge(dst, src)
+func (dst *WorkerSkill) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_WorkerSkill.Merge(dst, src)
 }
-func (m *CaseUpdate) XXX_Size() int {
-	return xxx_messageInfo_CaseUpdate.Size(m)
+func (m *WorkerSkill) XXX_Size() int {
+	return xxx_messageInfo_WorkerSkill.Size(m)
 }
-func (m *CaseUpdate) XXX_DiscardUnknown() {
-	xxx_messageInfo_CaseUpdate.DiscardUnknown(m)
+func (m *WorkerSkill) XXX_DiscardUnknown() {
+	xxx_messageInfo_WorkerSkill.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_CaseUpdate proto.InternalMessageInfo
+var xxx_messageInfo_WorkerSkill proto.InternalMessageInfo
 
-func (m *CaseUpdate) GetCaseID() int32 {
+func (m *WorkerSkill) GetTroubleshoot() int32 {
 	if m != nil {
-		return m.CaseID
+		return m.Troubleshoot
 	}
 	return 0
 }
 
-type CaseDetail struct {
-	CaseID               int32    `protobuf:"varint,1,opt,name=CaseID,proto3" json:"CaseID,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *CaseDetail) Reset()         { *m = CaseDetail{} }
-func (m *CaseDetail) String() string { return proto.CompactTextString(m) }
-func (*CaseDetail) ProtoMessage()    {}
-func (*CaseDetail) Descriptor() ([]byte, []int) {
-	return fileDescriptor_worker_7e8bebb011d98deb, []int{3}
-}
-func (m *CaseDetail) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_CaseDetail.Unmarshal(m, b)
-}
-func (m *CaseDetail) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_CaseDetail.Marshal(b, m, deterministic)
-}
-func (dst *CaseDetail) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CaseDetail.Merge(dst, src)
-}
-func (m *CaseDetail) XXX_Size() int {
-	return xxx_messageInfo_CaseDetail.Size(m)
-}
-func (m *CaseDetail) XXX_DiscardUnknown() {
-	xxx_messageInfo_CaseDetail.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_CaseDetail proto.InternalMessageInfo
-
-func (m *CaseDetail) GetCaseID() int32 {
+func (m *WorkerSkill) GetBuild() int32 {
 	if m != nil {
-		return m.CaseID
+		return m.Build
 	}
 	return 0
 }
 
-type RegistrationRequst struct {
-	RegRequest           string   `protobuf:"bytes,1,opt,name=RegRequest,proto3" json:"RegRequest,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *RegistrationRequst) Reset()         { *m = RegistrationRequst{} }
-func (m *RegistrationRequst) String() string { return proto.CompactTextString(m) }
-func (*RegistrationRequst) ProtoMessage()    {}
-func (*RegistrationRequst) Descriptor() ([]byte, []int) {
-	return fileDescriptor_worker_7e8bebb011d98deb, []int{4}
-}
-func (m *RegistrationRequst) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_RegistrationRequst.Unmarshal(m, b)
-}
-func (m *RegistrationRequst) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_RegistrationRequst.Marshal(b, m, deterministic)
-}
-func (dst *RegistrationRequst) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RegistrationRequst.Merge(dst, src)
-}
-func (m *RegistrationRequst) XXX_Size() int {
-	return xxx_messageInfo_RegistrationRequst.Size(m)
-}
-func (m *RegistrationRequst) XXX_DiscardUnknown() {
-	xxx_messageInfo_RegistrationRequst.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_RegistrationRequst proto.InternalMessageInfo
-
-func (m *RegistrationRequst) GetRegRequest() string {
+func (m *WorkerSkill) GetTech() int32 {
 	if m != nil {
-		return m.RegRequest
+		return m.Tech
 	}
-	return ""
+	return 0
 }
 
-type RegistrationResponse struct {
-	WorkerID             string   `protobuf:"bytes,1,opt,name=workerID,proto3" json:"workerID,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *RegistrationResponse) Reset()         { *m = RegistrationResponse{} }
-func (m *RegistrationResponse) String() string { return proto.CompactTextString(m) }
-func (*RegistrationResponse) ProtoMessage()    {}
-func (*RegistrationResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_worker_7e8bebb011d98deb, []int{5}
-}
-func (m *RegistrationResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_RegistrationResponse.Unmarshal(m, b)
-}
-func (m *RegistrationResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_RegistrationResponse.Marshal(b, m, deterministic)
-}
-func (dst *RegistrationResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RegistrationResponse.Merge(dst, src)
-}
-func (m *RegistrationResponse) XXX_Size() int {
-	return xxx_messageInfo_RegistrationResponse.Size(m)
-}
-func (m *RegistrationResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_RegistrationResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_RegistrationResponse proto.InternalMessageInfo
-
-func (m *RegistrationResponse) GetWorkerID() string {
+func (m *WorkerSkill) GetUsage() int32 {
 	if m != nil {
-		return m.WorkerID
+		return m.Usage
 	}
-	return ""
+	return 0
+}
+
+func (m *WorkerSkill) GetArchitecture() int32 {
+	if m != nil {
+		return m.Architecture
+	}
+	return 0
+}
+
+func (m *WorkerSkill) GetEnvironment() int32 {
+	if m != nil {
+		return m.Environment
+	}
+	return 0
+}
+
+func (m *WorkerSkill) GetExplain() int32 {
+	if m != nil {
+		return m.Explain
+	}
+	return 0
+}
+
+func (m *WorkerSkill) GetEmpathy() int32 {
+	if m != nil {
+		return m.Empathy
+	}
+	return 0
+}
+
+func (m *WorkerSkill) GetRelationship() int32 {
+	if m != nil {
+		return m.Relationship
+	}
+	return 0
 }
 
 func init() {
 	proto.RegisterType((*Case)(nil), "worker.Case")
 	proto.RegisterType((*Response)(nil), "worker.Response")
-	proto.RegisterType((*CaseUpdate)(nil), "worker.CaseUpdate")
-	proto.RegisterType((*CaseDetail)(nil), "worker.CaseDetail")
-	proto.RegisterType((*RegistrationRequst)(nil), "worker.RegistrationRequst")
-	proto.RegisterType((*RegistrationResponse)(nil), "worker.RegistrationResponse")
+	proto.RegisterType((*WorkerSkill)(nil), "worker.WorkerSkill")
 }
 
-func init() { proto.RegisterFile("protos/worker.proto", fileDescriptor_worker_7e8bebb011d98deb) }
+func init() { proto.RegisterFile("protos/worker.proto", fileDescriptor_worker_dc54cec19012dc42) }
 
-var fileDescriptor_worker_7e8bebb011d98deb = []byte{
-	// 306 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x91, 0xdf, 0x4b, 0xfb, 0x30,
-	0x14, 0xc5, 0x19, 0xdf, 0xaf, 0xb5, 0xbb, 0xf8, 0x20, 0x51, 0x64, 0x14, 0x19, 0x52, 0xf6, 0x30,
-	0x84, 0xae, 0x30, 0x7d, 0x15, 0xd9, 0x8f, 0x97, 0xe1, 0x8b, 0x44, 0x86, 0xe0, 0x83, 0x90, 0x65,
-	0x97, 0x5a, 0xa6, 0x49, 0xcd, 0xbd, 0x45, 0xfc, 0xef, 0xa5, 0x69, 0x3b, 0x9d, 0x28, 0xf8, 0x94,
-	0x7c, 0x92, 0x73, 0x4f, 0xce, 0xbd, 0x81, 0xa3, 0xc2, 0x59, 0xb6, 0x94, 0xbe, 0x59, 0xb7, 0x41,
-	0x37, 0xf2, 0x24, 0x82, 0x9a, 0xe2, 0x3e, 0xfc, 0x9f, 0x29, 0x42, 0x71, 0x02, 0x81, 0x56, 0x84,
-	0x8b, 0x79, 0xaf, 0x73, 0xd6, 0x19, 0xee, 0xc9, 0x86, 0xe2, 0x01, 0x84, 0x12, 0xa9, 0xb0, 0x86,
-	0x50, 0xf4, 0x60, 0xff, 0xae, 0xd4, 0x1a, 0x89, 0xbc, 0x28, 0x94, 0x2d, 0xc6, 0x03, 0x80, 0xca,
-	0x65, 0x59, 0xac, 0x15, 0x7b, 0xaf, 0xd9, 0x8e, 0xd7, 0xac, 0xf5, 0xf2, 0xaa, 0x39, 0xb2, 0xca,
-	0x9f, 0x7f, 0x55, 0x5d, 0x82, 0x90, 0x98, 0xe5, 0xc4, 0x4e, 0x71, 0x6e, 0x8d, 0xc4, 0xd7, 0x92,
-	0x58, 0xf4, 0x01, 0x24, 0x66, 0x15, 0x20, 0xb1, 0xaf, 0xe8, 0xca, 0x2f, 0x27, 0xf1, 0x18, 0x8e,
-	0x77, 0xab, 0x9a, 0xcc, 0x11, 0x84, 0x75, 0xa7, 0xcd, 0x3b, 0x5d, 0xb9, 0xe5, 0xf1, 0x23, 0x04,
-	0xf7, 0x7e, 0x2f, 0x86, 0x10, 0x4c, 0x88, 0xf2, 0xcc, 0x88, 0x83, 0x51, 0x33, 0xa6, 0x2a, 0x4d,
-	0x74, 0xd8, 0xd2, 0xd6, 0xef, 0x1c, 0xc2, 0xa5, 0x51, 0x7f, 0xd2, 0x8e, 0x6f, 0xe0, 0xdf, 0xe4,
-	0x76, 0x21, 0xe6, 0xd5, 0x08, 0xab, 0x68, 0xe8, 0x44, 0xf4, 0x29, 0xfa, 0xde, 0x62, 0x74, 0xfa,
-	0xf3, 0x5d, 0x6d, 0x36, 0xbd, 0x7e, 0xb8, 0xca, 0x72, 0x7e, 0x2a, 0x57, 0x23, 0x6d, 0x5f, 0xd2,
-	0xa9, 0x32, 0xca, 0xa8, 0xc4, 0xd8, 0x44, 0x19, 0x95, 0x52, 0x59, 0x14, 0xd6, 0x71, 0xc2, 0xb9,
-	0xde, 0x20, 0x27, 0xfc, 0xae, 0xad, 0x35, 0xe9, 0x4a, 0xe9, 0x0d, 0x9a, 0x75, 0x5a, 0x7f, 0xff,
-	0x2a, 0xf0, 0xeb, 0xc5, 0x47, 0x00, 0x00, 0x00, 0xff, 0xff, 0xfa, 0xfa, 0x71, 0xfb, 0x0f, 0x02,
-	0x00, 0x00,
+var fileDescriptor_worker_dc54cec19012dc42 = []byte{
+	// 355 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x92, 0x41, 0x4b, 0xc3, 0x30,
+	0x1c, 0xc5, 0xd9, 0xdc, 0xba, 0x9a, 0x0d, 0x94, 0x4c, 0x24, 0x78, 0x90, 0x51, 0x3c, 0x0c, 0xa1,
+	0x2b, 0xe8, 0xc5, 0x8b, 0xc8, 0xa6, 0x3b, 0x78, 0xed, 0x36, 0x04, 0x6f, 0x69, 0xf6, 0x67, 0x0d,
+	0xed, 0x92, 0x92, 0xa4, 0xea, 0x3e, 0x85, 0x57, 0x3f, 0xae, 0x34, 0x69, 0xa5, 0xe2, 0xc5, 0x53,
+	0xfb, 0x7b, 0xef, 0x35, 0x8f, 0xbe, 0x16, 0x8d, 0x0b, 0x25, 0x8d, 0xd4, 0xd1, 0xbb, 0x54, 0x19,
+	0xa8, 0x99, 0x25, 0xec, 0x39, 0x0a, 0x2e, 0x51, 0xef, 0x91, 0x6a, 0xc0, 0xe7, 0xc8, 0x63, 0x54,
+	0xc3, 0xf3, 0x13, 0xe9, 0x4c, 0x3a, 0xd3, 0x7e, 0x5c, 0x53, 0x70, 0x85, 0xfc, 0x18, 0x74, 0x21,
+	0x85, 0x06, 0x4c, 0xd0, 0x60, 0x55, 0x32, 0x06, 0x5a, 0xdb, 0x90, 0x1f, 0x37, 0x18, 0x7c, 0x76,
+	0xd1, 0xf0, 0xc5, 0x1e, 0xb8, 0xca, 0x78, 0x9e, 0xe3, 0x00, 0x8d, 0xd6, 0x4a, 0x96, 0x49, 0x0e,
+	0x3a, 0x95, 0xd2, 0xd4, 0x67, 0xfe, 0xd2, 0xf0, 0x19, 0xea, 0x2f, 0x4a, 0x9e, 0x6f, 0x49, 0xd7,
+	0x9a, 0x0e, 0x30, 0x46, 0xbd, 0x35, 0xb0, 0x94, 0x1c, 0x59, 0xd1, 0xde, 0x57, 0xc9, 0x8d, 0xa6,
+	0x3b, 0x20, 0x3d, 0x97, 0xb4, 0x50, 0x75, 0xcc, 0x15, 0x4b, 0xb9, 0x01, 0x66, 0x4a, 0x05, 0xa4,
+	0xef, 0x3a, 0xda, 0x1a, 0x9e, 0xa0, 0xe1, 0x52, 0xbc, 0x71, 0x25, 0xc5, 0x1e, 0x84, 0x21, 0x9e,
+	0x8d, 0xb4, 0xa5, 0xea, 0x9d, 0x96, 0x1f, 0x45, 0x4e, 0xb9, 0x20, 0x03, 0xeb, 0x36, 0x68, 0x9d,
+	0x7d, 0x41, 0x4d, 0x7a, 0x20, 0x7e, 0xed, 0x38, 0xac, 0x9a, 0x63, 0xc8, 0xa9, 0xe1, 0x52, 0xe8,
+	0x94, 0x17, 0xe4, 0xd8, 0x35, 0xb7, 0xb5, 0x9b, 0xaf, 0x0e, 0xf2, 0xdc, 0x22, 0x78, 0x8a, 0xbc,
+	0xb9, 0xd6, 0x7c, 0x27, 0xf0, 0x68, 0x56, 0x7f, 0x83, 0x6a, 0xf2, 0x8b, 0xd3, 0x86, 0x7e, 0x06,
+	0xbe, 0x46, 0xfe, 0x46, 0xd0, 0xff, 0x65, 0xef, 0xd0, 0xc9, 0x0a, 0x4c, 0x6b, 0x74, 0x8d, 0xc7,
+	0x4d, 0xa8, 0xa5, 0xfe, 0x7d, 0x72, 0xf1, 0xf0, 0x7a, 0xbf, 0xe3, 0x26, 0x2d, 0x93, 0x19, 0x93,
+	0xfb, 0x68, 0x41, 0x05, 0x15, 0x34, 0x14, 0x32, 0xa4, 0x82, 0x46, 0xba, 0x2c, 0x0a, 0xa9, 0x4c,
+	0x68, 0x38, 0xcb, 0xc0, 0x84, 0xe6, 0xc0, 0xa4, 0x14, 0x51, 0x42, 0x59, 0x06, 0x62, 0x1b, 0xb9,
+	0x1f, 0x29, 0xf1, 0xec, 0xf5, 0xf6, 0x3b, 0x00, 0x00, 0xff, 0xff, 0x44, 0xf2, 0xc4, 0xee, 0x59,
+	0x02, 0x00, 0x00,
 }

@@ -7,33 +7,29 @@ package worker;
 
 
 message Case {
-    int32 caseID =1 ; 
+    int32 caseID =1 ;  
 }
 
 message Response {
     bool Success = 1; 
-
 }
 
-//Update message to the case repo
-message CaseUpdate {
-    int32 CaseID = 1; 
-}
+message WorkerSkill {
+    int32 Troubleshoot = 1;
+    int32 Build = 2;
+    int32 Tech = 3;
 
-message CaseDetail {
-    int32 CaseID = 1; 
-    
-}
+    int32 Usage = 4; 
+    int32 Architecture = 5; 
+    int32 Environment = 6; 
 
-message RegistrationRequst {
-    string RegRequest =1; 
-}
-
-message RegistrationResponse {
-    string workerID =1; 
+    int32 Explain = 7; 
+    int32 Empathy = 8;
+    int32 Relationship = 9; 
 }
 
 service Worker{
     rpc Assign(Case) returns (Response);
     rpc Unassign(Case) returns (Response); 
+    rpc SetWorkerSkills(WorkerSkill) returns (Response); 
 }

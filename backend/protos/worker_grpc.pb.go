@@ -20,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 type WorkerClient interface {
 	Assign(ctx context.Context, in *Case, opts ...grpc.CallOption) (*Response, error)
 	Unassign(ctx context.Context, in *Case, opts ...grpc.CallOption) (*Response, error)
+	SetWorkerSkills(ctx context.Context, in *WorkerSkill, opts ...grpc.CallOption) (*Response, error)
 }
 
 type workerClient struct {
@@ -48,12 +49,22 @@ func (c *workerClient) Unassign(ctx context.Context, in *Case, opts ...grpc.Call
 	return out, nil
 }
 
+func (c *workerClient) SetWorkerSkills(ctx context.Context, in *WorkerSkill, opts ...grpc.CallOption) (*Response, error) {
+	out := new(Response)
+	err := c.cc.Invoke(ctx, "/worker.Worker/SetWorkerSkills", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WorkerServer is the server API for Worker service.
 // All implementations must embed UnimplementedWorkerServer
 // for forward compatibility
 type WorkerServer interface {
 	Assign(context.Context, *Case) (*Response, error)
 	Unassign(context.Context, *Case) (*Response, error)
+	SetWorkerSkills(context.Context, *WorkerSkill) (*Response, error)
 	mustEmbedUnimplementedWorkerServer()
 }
 
@@ -66,6 +77,9 @@ func (UnimplementedWorkerServer) Assign(context.Context, *Case) (*Response, erro
 }
 func (UnimplementedWorkerServer) Unassign(context.Context, *Case) (*Response, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Unassign not implemented")
+}
+func (UnimplementedWorkerServer) SetWorkerSkills(context.Context, *WorkerSkill) (*Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetWorkerSkills not implemented")
 }
 func (UnimplementedWorkerServer) mustEmbedUnimplementedWorkerServer() {}
 
@@ -116,6 +130,24 @@ func _Worker_Unassign_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Worker_SetWorkerSkills_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(WorkerSkill)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkerServer).SetWorkerSkills(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/worker.Worker/SetWorkerSkills",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkerServer).SetWorkerSkills(ctx, req.(*WorkerSkill))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Worker_ServiceDesc is the grpc.ServiceDesc for Worker service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -131,91 +163,9 @@ var Worker_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "Unassign",
 			Handler:    _Worker_Unassign_Handler,
 		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "protos/worker.proto",
-}
-
-// APIClient is the client API for API service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type APIClient interface {
-	Register(ctx context.Context, in *RegistrationRequst, opts ...grpc.CallOption) (*RegistrationResponse, error)
-}
-
-type aPIClient struct {
-	cc grpc.ClientConnInterface
-}
-
-func NewAPIClient(cc grpc.ClientConnInterface) APIClient {
-	return &aPIClient{cc}
-}
-
-func (c *aPIClient) Register(ctx context.Context, in *RegistrationRequst, opts ...grpc.CallOption) (*RegistrationResponse, error) {
-	out := new(RegistrationResponse)
-	err := c.cc.Invoke(ctx, "/worker.API/Register", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// APIServer is the server API for API service.
-// All implementations must embed UnimplementedAPIServer
-// for forward compatibility
-type APIServer interface {
-	Register(context.Context, *RegistrationRequst) (*RegistrationResponse, error)
-	mustEmbedUnimplementedAPIServer()
-}
-
-// UnimplementedAPIServer must be embedded to have forward compatible implementations.
-type UnimplementedAPIServer struct {
-}
-
-func (UnimplementedAPIServer) Register(context.Context, *RegistrationRequst) (*RegistrationResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
-}
-func (UnimplementedAPIServer) mustEmbedUnimplementedAPIServer() {}
-
-// UnsafeAPIServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to APIServer will
-// result in compilation errors.
-type UnsafeAPIServer interface {
-	mustEmbedUnimplementedAPIServer()
-}
-
-func RegisterAPIServer(s grpc.ServiceRegistrar, srv APIServer) {
-	s.RegisterService(&API_ServiceDesc, srv)
-}
-
-func _API_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RegistrationRequst)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(APIServer).Register(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/worker.API/Register",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(APIServer).Register(ctx, req.(*RegistrationRequst))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-// API_ServiceDesc is the grpc.ServiceDesc for API service.
-// It's only intended for direct use with grpc.RegisterService,
-// and not to be introspected or modified (even as a copy)
-var API_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "worker.API",
-	HandlerType: (*APIServer)(nil),
-	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Register",
-			Handler:    _API_Register_Handler,
+			MethodName: "SetWorkerSkills",
+			Handler:    _Worker_SetWorkerSkills_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
