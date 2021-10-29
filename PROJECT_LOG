@@ -14,6 +14,14 @@ Stage 1: Scenario 1 - Manual assign some cases
     * View cases and workers on a frontend - so we actually can do some assign 
 
 
+Day 13 (Oct.28 - Thursday)
+    * Started thinking about getting case state, modified the proto definitions
+    * API server feels monolithic. Not sure if there is anything better though
+    * Wrote some integration tests in python. Finally have a little bit of testing framework to make sure we quickly discover when we break stuff. 
+
+Day 13 (Oct.27-28 Tuesday/Wedesnday)
+    * Worked on being able to do a scenario interface. Creating workers out of json files and such. 
+
 Day 12 (Oct.25 - Monday)
     * Got a nginx container with the image assets going 
     * Figured out how to put a face on the case 

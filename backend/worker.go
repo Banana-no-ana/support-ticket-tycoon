@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"strconv"
 
 	"google.golang.org/grpc"
@@ -66,7 +67,7 @@ func newWorkerServer() *WorkerServer {
 func (s *WorkerServer) Assign(ctx context.Context, in *pb.Case) (*pb.Response, error) {
 	c := Case{CaseID: in.GetCaseID()}
 	assignedCases = append(assignedCases, c)
-	log.Println("Case : ", in.GetCaseID(), "was assigned")
+	log.Println("Case ", in.GetCaseID(), "has been assigned")
 	return &pb.Response{Success: true}, nil
 }
 
@@ -79,9 +80,18 @@ func (s *WorkerServer) Hello(context.Context, *pb.Response) (*pb.Response, error
 	return &pb.Response{Success: true}, nil
 }
 
+func healthz(w http.ResponseWriter, req *http.Request) {
+	fmt.Fprintf(w, "ok")
+}
+
+func kill(w http.ResponseWriter, req *http.Request) {
+	log.Println("Received request to terminate")
+	os.Exit(0)
+}
+
 func main() {
-	http_port := flag.String("http_port", ":9000", "set the listneing port of the worker. ")
-	rpc_port := flag.String("rpc_port", ":10000", "set the listneing port of the worker. ")
+	http_port := flag.String("http_port", ":9000", "set the http listneing port of the worker. ")
+	rpc_port := flag.String("rpc_port", ":10000", "set the rpc listneing port of the worker. ")
 	worker_id_flag := flag.Int("worker_id", 1, "Identify the ID of the worker. ")
 
 	flag.Parse()
@@ -90,10 +100,13 @@ func main() {
 
 	r := mux.NewRouter()
 	r.HandleFunc("/assign/{caseid}", caseAssign)
+	r.HandleFunc("/healthz", healthz)
+	r.HandleFunc("/kill", kill)
+	// r.HandleFunc("/case/{caseid}", getCase) TODO: Implement this
 	// r.HandleFunc("/unassign/{caseid}", caseAssign)
 
 	http.Handle("/", r)
-	log.Println("listening on :", *http_port)
+	log.Println("listening for http requests on :", *http_port)
 	go http.ListenAndServe(*http_port, nil)
 
 	go clockclient.CreateClockClient(tock)
@@ -104,7 +117,7 @@ func main() {
 	}
 	s := grpc.NewServer()
 	pb.RegisterWorkerServer(s, newWorkerServer())
-	log.Printf("Worker %d started at %v", workerID, lis.Addr())
+	log.Printf("Worker %d serving rpc requests on: %v", workerID, lis.Addr())
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}

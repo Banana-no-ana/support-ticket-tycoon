@@ -1,0 +1,3 @@
+
+Folder of integration tests written in python. 
+Chose python because I just need a blackbox framekwork to test for http requests. 

@@ -86,7 +86,8 @@ func getWorkerClient(worker_ID int) pb.WorkerClient {
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithInsecure())
 	opts = append(opts, grpc.WithBlock())
-	worker_conn, _ := grpc.Dial("localhost:10000", opts...)
+	workeraddr := "localhost:" + strconv.Itoa(10000+worker_ID)
+	worker_conn, _ := grpc.Dial(workeraddr, opts...)
 	// defer worker_conn.Close()
 
 	worker_client := pb.NewWorkerClient(worker_conn)
@@ -148,7 +149,7 @@ func createWorker(w Worker) {
 	http_port := "-http_port=:" + strconv.Itoa(9000+w.WorkerID)
 
 	log.Println("Creating worker: ", w.WorkerID, rpc_port, http_port)
-	cmd := exec.Command("go", "run", "worker.go", "-worker_id="+string(nextWorkerId), rpc_port, http_port)
+	cmd := exec.Command("go", "run", "worker.go", "-worker_id="+strconv.Itoa(w.WorkerID), rpc_port, http_port)
 
 	err := cmd.Start()
 	// err := cmd.Run()
@@ -178,6 +179,8 @@ func createWorkerRequest(w http.ResponseWriter, req *http.Request) {
 func loadScenario(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	scenarioid := vars["scenarioid"]
+
+	//TODO: Need to change to some sort of absolute pathing instead of relative pathing
 	f := "../scenarios/s" + scenarioid + ".json"
 
 	log.Println("Loading scenario from: ", f)
@@ -197,6 +200,7 @@ func loadScenario(w http.ResponseWriter, req *http.Request) {
 
 	var numCreatedWorkers int = 0
 	for _, w := range scenario.Workers {
+		//TODO: What do we do if these workers exist? Kill their existing work probably.
 		createWorker(w)
 		numCreatedWorkers++
 	}
@@ -206,11 +210,23 @@ func loadScenario(w http.ResponseWriter, req *http.Request) {
 
 }
 
+func healthz(w http.ResponseWriter, req *http.Request) {
+	fmt.Fprintf(w, "ok")
+}
+
+func kill(w http.ResponseWriter, req *http.Request) {
+	log.Println("Received request to terminate")
+	os.Exit(0)
+}
+
 func main() {
 	r := mux.NewRouter()
+	r.HandleFunc("/healthz", healthz) //Assign a case to a worker. Must be a post request
+	r.HandleFunc("/kill", kill)
+
+	r.HandleFunc("/case/create", generateCase)  //generateCase new case and return a case ID.
 	r.HandleFunc("/case/assign", assign)        //Assign a case to a worker. Must be a post request
 	r.HandleFunc("/case/list", listCases)       //List all cases and their statuses
-	r.HandleFunc("/case/create", generateCase)  //generateCase new case and return a case ID.
 	r.HandleFunc("/case/get/{caseid}", getcase) //get info of a case.
 
 	// r.HandleFunc("/worker/register", registerWorker) //register a worker. Don't need this
