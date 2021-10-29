@@ -3,7 +3,7 @@
 //API server keeps all the state that frontend may need
 //API server also responsible for adjusting game speed (controlled by tick rate)
 
-//Manually generate a case. Expose both RPC and REST endpoint, but they end up calling the same function.
+//Manually generateCase a case. Expose both RPC and REST endpoint, but they end up calling the same function.
 
 package main
 
@@ -31,6 +31,7 @@ var cases []Case
 var workers []Worker
 var nextCaseId int //TODO: Change to use closure instead
 var nextWorkerId int = 100
+var workerConnections map[int]pb.WorkerClient
 
 type Scenario struct {
 	Workers []Worker `json:"workers"`
@@ -38,7 +39,7 @@ type Scenario struct {
 
 type Worker struct {
 	WorkerID int            //Assigned worker ID
-	Name     string         //Generated from a list of names
+	Name     string         //generateCased from a list of names
 	FaceID   int            //Icon for worker face
 	Skills   pb.WorkerSkill //Worker's skills
 }
@@ -51,7 +52,7 @@ type Case struct {
 	CustomerSentiment int    //Customer's current sentiment of the case (range between 1, 2, 3, 4, 5 (5 being happy))
 }
 
-func generate(w http.ResponseWriter, req *http.Request) {
+func generateCase(w http.ResponseWriter, req *http.Request) {
 	c := Case{CaseID: nextCaseId, State: "New", Assignee: 0,
 		CustomerID: rand.Intn(5) + 1, CustomerSentiment: 3}
 	cases = append(cases, c)
@@ -72,6 +73,27 @@ func listCases(w http.ResponseWriter, req *http.Request) {
 	fmt.Fprintf(w, string(b))
 }
 
+func getWorkerClient(worker_ID int) pb.WorkerClient {
+	if workerConnections == nil {
+		workerConnections = make(map[int]pb.WorkerClient)
+	} else {
+		conn, ok := workerConnections[int(worker_ID)]
+		if ok {
+			return conn
+		}
+	}
+
+	var opts []grpc.DialOption
+	opts = append(opts, grpc.WithInsecure())
+	opts = append(opts, grpc.WithBlock())
+	worker_conn, _ := grpc.Dial("localhost:10000", opts...)
+	// defer worker_conn.Close()
+
+	worker_client := pb.NewWorkerClient(worker_conn)
+	workerConnections[worker_ID] = worker_client
+	return worker_client
+}
+
 func assign(w http.ResponseWriter, req *http.Request) {
 	//TODO: Unassign from current assignee
 
@@ -82,22 +104,24 @@ func assign(w http.ResponseWriter, req *http.Request) {
 
 	form_caseID, _ := strconv.Atoi(req.FormValue("caseid"))
 	form_caseID32 := int32(form_caseID)
+	form_workerID, _ := strconv.Atoi(req.FormValue("workerid"))
+
+	log.Println("Received request to assign case ", form_caseID, "to worker ", form_workerID)
 	// wtfForm, _ := req.FormValue(("caseid"))
 	// log.Println(wtfForm)
 
-	var opts []grpc.DialOption
-	opts = append(opts, grpc.WithInsecure())
-	opts = append(opts, grpc.WithBlock())
-	worker_conn, _ := grpc.Dial("localhost:8080", opts...)
-	defer worker_conn.Close()
+	clientConn := getWorkerClient(form_workerID)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	worker_client := pb.NewWorkerClient(worker_conn)
-	result, _ := worker_client.Assign(ctx, &pb.Case{CaseID: form_caseID32})
+	result, err := clientConn.Assign(ctx, &pb.Case{CaseID: form_caseID32})
 	if result.GetSuccess() {
 		log.Println("Assigning case ", form_caseID32, " was successful")
 		fmt.Fprintf(w, "Assigning case %d was successful", form_caseID32)
+	} else {
+		log.Println("Assigning case ", form_caseID32, " failed")
+		log.Println(err)
+		fmt.Fprintf(w, "Assigning case %d failed", form_caseID32)
 	}
 }
 
@@ -186,7 +210,7 @@ func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/case/assign", assign)        //Assign a case to a worker. Must be a post request
 	r.HandleFunc("/case/list", listCases)       //List all cases and their statuses
-	r.HandleFunc("/case/create", generate)      //generate new case and return a case ID.
+	r.HandleFunc("/case/create", generateCase)  //generateCase new case and return a case ID.
 	r.HandleFunc("/case/get/{caseid}", getcase) //get info of a case.
 
 	// r.HandleFunc("/worker/register", registerWorker) //register a worker. Don't need this

@@ -19,6 +19,7 @@ import (
 //Global Variables!!!!
 var assignedCases []Case
 var workerID int
+var _skills pb.WorkerSkill
 
 type Case struct {
 	CaseID int32
@@ -69,7 +70,12 @@ func (s *WorkerServer) Assign(ctx context.Context, in *pb.Case) (*pb.Response, e
 	return &pb.Response{Success: true}, nil
 }
 
-func (s *WorkerServer) SetWorkerSkills(context.Context, *pb.WorkerSkill) (*pb.Response, error) {
+func (s *WorkerServer) SetWorkerSkills(c context.Context, sk *pb.WorkerSkill) (*pb.Response, error) {
+	_skills = pb.WorkerSkill(*sk)
+	return &pb.Response{Success: true}, nil
+}
+
+func (s *WorkerServer) Hello(context.Context, *pb.Response) (*pb.Response, error) {
 	return &pb.Response{Success: true}, nil
 }
 
