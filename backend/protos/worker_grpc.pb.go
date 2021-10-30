@@ -23,6 +23,7 @@ type WorkerClient interface {
 	SetWorkerSkills(ctx context.Context, in *WorkerSkill, opts ...grpc.CallOption) (*Response, error)
 	Hello(ctx context.Context, in *Response, opts ...grpc.CallOption) (*Response, error)
 	GetCaseState(ctx context.Context, in *Case, opts ...grpc.CallOption) (Worker_GetCaseStateClient, error)
+	KillWorker(ctx context.Context, in *Response, opts ...grpc.CallOption) (*Response, error)
 }
 
 type workerClient struct {
@@ -101,6 +102,15 @@ func (x *workerGetCaseStateClient) Recv() (*CaseState, error) {
 	return m, nil
 }
 
+func (c *workerClient) KillWorker(ctx context.Context, in *Response, opts ...grpc.CallOption) (*Response, error) {
+	out := new(Response)
+	err := c.cc.Invoke(ctx, "/worker.Worker/KillWorker", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WorkerServer is the server API for Worker service.
 // All implementations must embed UnimplementedWorkerServer
 // for forward compatibility
@@ -110,6 +120,7 @@ type WorkerServer interface {
 	SetWorkerSkills(context.Context, *WorkerSkill) (*Response, error)
 	Hello(context.Context, *Response) (*Response, error)
 	GetCaseState(*Case, Worker_GetCaseStateServer) error
+	KillWorker(context.Context, *Response) (*Response, error)
 	mustEmbedUnimplementedWorkerServer()
 }
 
@@ -131,6 +142,9 @@ func (UnimplementedWorkerServer) Hello(context.Context, *Response) (*Response, e
 }
 func (UnimplementedWorkerServer) GetCaseState(*Case, Worker_GetCaseStateServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetCaseState not implemented")
+}
+func (UnimplementedWorkerServer) KillWorker(context.Context, *Response) (*Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method KillWorker not implemented")
 }
 func (UnimplementedWorkerServer) mustEmbedUnimplementedWorkerServer() {}
 
@@ -238,6 +252,24 @@ func (x *workerGetCaseStateServer) Send(m *CaseState) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _Worker_KillWorker_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Response)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkerServer).KillWorker(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/worker.Worker/KillWorker",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkerServer).KillWorker(ctx, req.(*Response))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Worker_ServiceDesc is the grpc.ServiceDesc for Worker service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -260,6 +292,10 @@ var Worker_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Hello",
 			Handler:    _Worker_Hello_Handler,
+		},
+		{
+			MethodName: "KillWorker",
+			Handler:    _Worker_KillWorker_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

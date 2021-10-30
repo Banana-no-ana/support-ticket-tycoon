@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc"
 
 	pb "github.com/Banana-no-ana/support-ticket-tycoon/backend/protos"
+	serviceutils "github.com/Banana-no-ana/support-ticket-tycoon/backend/utils"
 	"github.com/gorilla/mux"
 )
 
@@ -76,6 +77,8 @@ func main() {
 
 	r := mux.NewRouter()
 	r.HandleFunc("/register/{port}", register)
+	r.HandleFunc("/healthz", serviceutils.Healthz)
+	r.HandleFunc("/kill", serviceutils.Kill)
 
 	http.Handle("/", r)
 	log.Println("Starting HTTP clock on port 7000")

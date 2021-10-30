@@ -1,6 +1,7 @@
 import pytest
 import requests
 import subprocess
+import time
 
 apiaddr = "http://localhost:8001/"
 
@@ -32,15 +33,31 @@ class TestScenario:
     def test_loadscenario(self): 
         r = requests.get(apiaddr + "scenario/load/0") #Scenario 0 should have 4 workers
         assert r.text.__contains__("Created 4 Worker")
-       
 
-class TestAssignCaseToWorker:
+    # def test_workerSkill(self): 
+    #     r = requests.get("http://localhost:9001/skill/list")
+    #     assert r.status_code == 200
+    #     assert r.text.__contains__("Build")
+
     def testAssign(self):
         data = {'caseid':1 , 'workerid':1}
-        r = requests.post(apiaddr+ "case/assign", data)
-        assert r.status_code == 200
-        assert r.text.__contains__("sucessful")
+        with requests.post(apiaddr+ "case/assign", data) as r: 
+            assert r.status_code == 200
+            assert r.text.__contains__("successful")
 
-        # r2 = requests.get("http://localhost/") //Need to also check that the worker actually has it
-
-
+    def testAssign2(self):
+        data = {'caseid':100 , 'workerid':2}
+        with requests.post(apiaddr+ "case/assign", data) as r: 
+            assert r.status_code == 200
+        
+        with requests.get("http://localhost:9002/case/list") as r: 
+            assert r.text.__contains__("100")
+       
+    def test_UnloadScenario(self):
+        with requests.get(apiaddr + "scenario/unload") as r: 
+            assert r.status_code == 200
+            assert r.text.__contains__("Removed")
+        
+        time.sleep(0.1)
+        with pytest.raises(Exception) as e:
+            requests.get("http://localhost:9001/healthz")

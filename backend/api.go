@@ -20,6 +20,7 @@ import (
 	"context"
 
 	pb "github.com/Banana-no-ana/support-ticket-tycoon/backend/protos"
+	serviceutils "github.com/Banana-no-ana/support-ticket-tycoon/backend/utils"
 	"google.golang.org/grpc"
 
 	"os/exec"
@@ -28,20 +29,20 @@ import (
 )
 
 var cases []Case
-var workers []Worker
+var workers []*Worker
 var nextCaseId int //TODO: Change to use closure instead
 var nextWorkerId int = 100
-var workerConnections map[int]pb.WorkerClient
 
 type Scenario struct {
 	Workers []Worker `json:"workers"`
 }
 
 type Worker struct {
-	WorkerID int            //Assigned worker ID
-	Name     string         //generateCased from a list of names
-	FaceID   int            //Icon for worker face
-	Skills   pb.WorkerSkill //Worker's skills
+	WorkerID   int             //Assigned worker ID
+	Name       string          //generateCased from a list of names
+	FaceID     int             //Icon for worker face
+	Skills     pb.WorkerSkill  //Worker's skills
+	Connection pb.WorkerClient //Client connection to the worker.
 }
 
 type Case struct {
@@ -73,26 +74,13 @@ func listCases(w http.ResponseWriter, req *http.Request) {
 	fmt.Fprintf(w, string(b))
 }
 
-func getWorkerClient(worker_ID int) pb.WorkerClient {
-	if workerConnections == nil {
-		workerConnections = make(map[int]pb.WorkerClient)
-	} else {
-		conn, ok := workerConnections[int(worker_ID)]
-		if ok {
-			return conn
+func getWorkerfromID(id int) *Worker {
+	for _, x := range workers {
+		if x.WorkerID == id {
+			return x
 		}
 	}
-
-	var opts []grpc.DialOption
-	opts = append(opts, grpc.WithInsecure())
-	opts = append(opts, grpc.WithBlock())
-	workeraddr := "localhost:" + strconv.Itoa(10000+worker_ID)
-	worker_conn, _ := grpc.Dial(workeraddr, opts...)
-	// defer worker_conn.Close()
-
-	worker_client := pb.NewWorkerClient(worker_conn)
-	workerConnections[worker_ID] = worker_client
-	return worker_client
+	return &Worker{}
 }
 
 func assign(w http.ResponseWriter, req *http.Request) {
@@ -111,7 +99,7 @@ func assign(w http.ResponseWriter, req *http.Request) {
 	// wtfForm, _ := req.FormValue(("caseid"))
 	// log.Println(wtfForm)
 
-	clientConn := getWorkerClient(form_workerID)
+	clientConn := getWorkerfromID(form_workerID).Connection
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -144,7 +132,18 @@ func listWorkers(w http.ResponseWriter, req *http.Request) {
 	fmt.Fprintf(w, string(b))
 }
 
-func createWorker(w Worker) {
+func createWorkerClient(w *Worker) {
+	var opts []grpc.DialOption
+	opts = append(opts, grpc.WithInsecure())
+	opts = append(opts, grpc.WithBlock())
+	workeraddr := "localhost:" + strconv.Itoa(10000+w.WorkerID)
+	worker_conn, _ := grpc.Dial(workeraddr, opts...)
+	// defer worker_conn.Close()
+
+	w.Connection = pb.NewWorkerClient(worker_conn)
+}
+
+func createWorker(w *Worker) {
 	rpc_port := "-rpc_port=:" + strconv.Itoa(10000+w.WorkerID)
 	http_port := "-http_port=:" + strconv.Itoa(9000+w.WorkerID)
 
@@ -157,7 +156,9 @@ func createWorker(w Worker) {
 		log.Fatal(err)
 	}
 
+	createWorkerClient(w)
 	workers = append(workers, w)
+
 }
 
 func createWorkerRequest(w http.ResponseWriter, req *http.Request) {
@@ -167,7 +168,7 @@ func createWorkerRequest(w http.ResponseWriter, req *http.Request) {
 	worker := Worker{WorkerID: nextWorkerId, FaceID: 1, Name: "Unnamed"}
 	// n := "-worker_id=" + strconv.Itoa(nextWorkerId)
 
-	createWorker(worker)
+	createWorker(&worker)
 	nextWorkerId++
 
 	fmt.Fprintf(w, "Created worker \n")
@@ -199,9 +200,10 @@ func loadScenario(w http.ResponseWriter, req *http.Request) {
 	}
 
 	var numCreatedWorkers int = 0
-	for _, w := range scenario.Workers {
+	for _, worker := range scenario.Workers {
 		//TODO: What do we do if these workers exist? Kill their existing work probably.
-		createWorker(w)
+		cur := Worker(worker)
+		createWorker(&cur)
 		numCreatedWorkers++
 	}
 
@@ -210,19 +212,29 @@ func loadScenario(w http.ResponseWriter, req *http.Request) {
 
 }
 
-func healthz(w http.ResponseWriter, req *http.Request) {
-	fmt.Fprintf(w, "ok")
+func destroyWorker(w *Worker) {
+	log.Println("Destoring worker: ", strconv.Itoa(w.WorkerID))
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	w.Connection.KillWorker(ctx, &pb.Response{Success: true})
 }
 
-func kill(w http.ResponseWriter, req *http.Request) {
-	log.Println("Received request to terminate")
-	os.Exit(0)
+func unloadScenario(w http.ResponseWriter, req *http.Request) {
+	log.Println("Received Request to unload scenario. Destroying all workers")
+
+	for _, w := range workers {
+		destroyWorker(w)
+	}
+	workers = nil
+
+	fmt.Fprintf(w, "Removed all workers")
 }
 
 func main() {
 	r := mux.NewRouter()
-	r.HandleFunc("/healthz", healthz) //Assign a case to a worker. Must be a post request
-	r.HandleFunc("/kill", kill)
+	r.HandleFunc("/healthz", serviceutils.Healthz) //Assign a case to a worker. Must be a post request
+	r.HandleFunc("/kill", serviceutils.Kill)
 
 	r.HandleFunc("/case/create", generateCase)  //generateCase new case and return a case ID.
 	r.HandleFunc("/case/assign", assign)        //Assign a case to a worker. Must be a post request
@@ -234,6 +246,7 @@ func main() {
 	r.HandleFunc("/worker/create", createWorkerRequest) // Create workers
 
 	r.HandleFunc("/scenario/load/{scenarioid}", loadScenario) // Create workers
+	r.HandleFunc("/scenario/unload", unloadScenario)          // destroy all the existing workers and clear out all the cases.
 
 	http.Handle("/", r)
 	log.Println("Listening on ", ":8001")

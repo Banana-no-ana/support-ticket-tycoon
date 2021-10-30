@@ -50,4 +50,5 @@ service Worker{
     rpc SetWorkerSkills(WorkerSkill) returns (Response); 
     rpc Hello(Response) returns (Response); 
     rpc GetCaseState(Case) returns (stream CaseState); 
+    rpc KillWorker(Response) returns (Response); 
 }

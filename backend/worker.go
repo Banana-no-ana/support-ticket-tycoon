@@ -2,18 +2,19 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
 	"net"
 	"net/http"
-	"os"
 	"strconv"
 
 	"google.golang.org/grpc"
 
 	"github.com/Banana-no-ana/support-ticket-tycoon/backend/clockclient"
 	pb "github.com/Banana-no-ana/support-ticket-tycoon/backend/protos"
+	serviceutils "github.com/Banana-no-ana/support-ticket-tycoon/backend/utils"
 	"github.com/gorilla/mux"
 )
 
@@ -30,6 +31,11 @@ type Worker struct {
 	Name   string //Generated from a list of names
 	FaceID int    //Icon for worker face
 	ID     int    //Assigned worker ID
+}
+
+func listCases(w http.ResponseWriter, req *http.Request) {
+	b, _ := json.Marshal(assignedCases)
+	fmt.Fprintf(w, string(b))
 }
 
 func caseAssign(w http.ResponseWriter, req *http.Request) {
@@ -80,13 +86,14 @@ func (s *WorkerServer) Hello(context.Context, *pb.Response) (*pb.Response, error
 	return &pb.Response{Success: true}, nil
 }
 
-func healthz(w http.ResponseWriter, req *http.Request) {
-	fmt.Fprintf(w, "ok")
+func (s *WorkerServer) KillWorker(context.Context, *pb.Response) (*pb.Response, error) {
+	go serviceutils.Kill2()
+	return &pb.Response{Success: true}, nil
 }
 
-func kill(w http.ResponseWriter, req *http.Request) {
-	log.Println("Received request to terminate")
-	os.Exit(0)
+func listskills(w http.ResponseWriter, req *http.Request) {
+	m, _ := json.Marshal(_skills)
+	fmt.Fprintf(w, string(m))
 }
 
 func main() {
@@ -100,8 +107,10 @@ func main() {
 
 	r := mux.NewRouter()
 	r.HandleFunc("/assign/{caseid}", caseAssign)
-	r.HandleFunc("/healthz", healthz)
-	r.HandleFunc("/kill", kill)
+	r.HandleFunc("/healthz", serviceutils.Healthz)
+	r.HandleFunc("/kill", serviceutils.Kill)
+	r.HandleFunc("/skill/list", listskills)
+	r.HandleFunc("/case/list", listCases)
 	// r.HandleFunc("/case/{caseid}", getCase) TODO: Implement this
 	// r.HandleFunc("/unassign/{caseid}", caseAssign)
 
