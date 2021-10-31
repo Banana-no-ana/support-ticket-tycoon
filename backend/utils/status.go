@@ -14,11 +14,11 @@ func Healthz(w http.ResponseWriter, req *http.Request) {
 
 func Kill(w http.ResponseWriter, req *http.Request) {
 	log.Println("Received request to terminate")
-	os.Exit(0)
+	go Kill2()
 }
 
 func Kill2() {
 	log.Println("Received request to terminate")
-	time.Sleep(0 * time.Second)
+	time.Sleep(50 * time.Millisecond)
 	os.Exit(0)
 }

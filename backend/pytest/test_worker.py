@@ -1,27 +1,39 @@
 import pytest
 import requests
 import subprocess
+import time
+import logging
+import json
+
+from requests import api
+
 
 workeraddr = "http://localhost:9201/"
+adpiaddr = "http://localhost:8001/"
 
 class TestWorker:    
-    def setup_method(self, test_method):
-        # os.system("go run ../worker.go --rpc_port=:10200 --http_port=:9200 --worker_id=200 ") 
+    def test_start_test(self): 
         subprocess.Popen(["go", "run", "../worker.go", "--rpc_port=:10201", "--http_port=:9201", "--worker_id=201"] )
-
-    def teardown_method(self, test_method):
-        r = requests.get(workeraddr + "kill")
-
-    def test_startup(self):         
+        time.sleep(1)
         with requests.get(workeraddr + "healthz") as r:
             assert r.text == "ok"   
 
     def test_assign(self):
-        with requests.get(workeraddr + "assign/100") as r: 
+        with requests.get(workeraddr + "assign/100") as r:
             assert r.status_code == 200
             assert r.text.startswith("case accepted")
 
     def test_listcases(self):
-        with requests.get(workeraddr + "case/list") as r:
+        with requests.get(workeraddr + "case/list") as r: 
             assert r.status_code == 200
             assert r.text.__contains__("100")
+
+
+    def test_addWorkertoAPI(self):
+        data = {"WorkerID":201}
+        r = requests.post(adpiaddr + "worker/add", json.dumps(data))
+        assert r.status_code == 200
+        assert r.text.__contains__("Added")
+
+    def test_endtest(self):
+        r = requests.get(workeraddr + "kill")

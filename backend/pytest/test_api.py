@@ -34,6 +34,8 @@ class TestScenario:
         r = requests.get(apiaddr + "scenario/load/0") #Scenario 0 should have 4 workers
         assert r.text.__contains__("Created 4 Worker")
 
+        time.sleep(2)
+
     # def test_workerSkill(self): 
     #     r = requests.get("http://localhost:9001/skill/list")
     #     assert r.status_code == 200
@@ -56,8 +58,8 @@ class TestScenario:
     def test_UnloadScenario(self):
         with requests.get(apiaddr + "scenario/unload") as r: 
             assert r.status_code == 200
-            assert r.text.__contains__("Removed")
+            assert r.text.__contains__("Removed")        
         
-        time.sleep(0.1)
+        time.sleep(1)
         with pytest.raises(Exception) as e:
             requests.get("http://localhost:9001/healthz")

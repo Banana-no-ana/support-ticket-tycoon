@@ -1,9 +1,13 @@
-Backlog: 
+Feature backlog: 
+    * Save and reload within a scenario
+    * Scenario management
+    * Manager skills
+
+Backlog (current iteration): 
     * Need worker to be able to advance through some of the case scenarios.
-    * How does the "customer" respond? 
-    * We'll definitely need a database.
-    * Somepoint a frontend will be good to have. It should be able to display the workers.
+    * How does the "customer" respond?
     * Need a service to keep track of the cases. Some sort of a document database?
+        * For now, just keep it in the API server 
     * At some point we're going to need to write tests. 
 
 
@@ -13,6 +17,9 @@ Stage 1: Scenario 1 - Manual assign some cases
     * Workers work through a case
     * View cases and workers on a frontend - so we actually can do some assign 
 
+
+Day 15 (Oct.30 - Saturday)
+    * Tried to make the tests less flaky. They currently are due to running kills and creating connections on different threads. 
 
 Day 14 (Oct.29 - Friday)
     * Added more tests and minor functionality to unload scenario 
