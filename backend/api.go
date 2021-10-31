@@ -156,7 +156,7 @@ func createOrReplaceWorker(w *Worker) {
 		log.Fatal(err)
 	}
 
-	go createWorkerClient(w)
+	createWorkerClient(w)
 	workers[w.WorkerID] = w
 }
 
@@ -222,6 +222,9 @@ func loadScenario(w http.ResponseWriter, req *http.Request) {
 		//TODO: What do we do if these workers exist? Kill their existing work probably.
 		cur := Worker(worker)
 		createOrReplaceWorker(&cur)
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		go cur.Connection.SetWorkerSkills(ctx, &cur.Skills)
 		numCreatedWorkers++
 	}
 
