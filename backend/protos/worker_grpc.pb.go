@@ -86,7 +86,7 @@ func (c *workerClient) GetCaseState(ctx context.Context, in *Case, opts ...grpc.
 }
 
 type Worker_GetCaseStateClient interface {
-	Recv() (*CaseState, error)
+	Recv() (*CaseProgress, error)
 	grpc.ClientStream
 }
 
@@ -94,8 +94,8 @@ type workerGetCaseStateClient struct {
 	grpc.ClientStream
 }
 
-func (x *workerGetCaseStateClient) Recv() (*CaseState, error) {
-	m := new(CaseState)
+func (x *workerGetCaseStateClient) Recv() (*CaseProgress, error) {
+	m := new(CaseProgress)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -240,7 +240,7 @@ func _Worker_GetCaseState_Handler(srv interface{}, stream grpc.ServerStream) err
 }
 
 type Worker_GetCaseStateServer interface {
-	Send(*CaseState) error
+	Send(*CaseProgress) error
 	grpc.ServerStream
 }
 
@@ -248,7 +248,7 @@ type workerGetCaseStateServer struct {
 	grpc.ServerStream
 }
 
-func (x *workerGetCaseStateServer) Send(m *CaseState) error {
+func (x *workerGetCaseStateServer) Send(m *CaseProgress) error {
 	return x.ServerStream.SendMsg(m)
 }
 

@@ -58,7 +58,10 @@ func unassign(w http.ResponseWriter, req *http.Request) {
 
 //When the clock ticks, it tocks us.
 func tock() {
-	log.Println("We've been Tock'd ")
+	//Step 1: Look at the current case. What state is it in?
+	//Case details should be given to us on assign.
+
+	return
 }
 
 type WorkerServer struct {

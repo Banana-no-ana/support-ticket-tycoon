@@ -1,0 +1,6 @@
+//Define what the customer is supposed to do
+syntax = "proto3";
+
+option go_package = "github.com/Banana-no-ana/support-ticket-tycoon/backend/protos";
+package customer;
+

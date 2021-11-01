@@ -1,0 +1,24 @@
+//Define what the customer is supposed to do
+syntax = "proto3";
+
+option go_package = "github.com/Banana-no-ana/support-ticket-tycoon/backend/protos";
+package case;
+
+message Case {
+    int32 caseID =1 ;  
+}
+
+message CaseProgress {
+    int32 currentStage = 1; //What is the worker currently working on.
+    repeated CaseStage Stage = 2; 
+    string Status = 3; // Case status Assigne, started, etc.     
+}
+
+message CaseStage {
+    int32 StageID = 1; 
+    string Type = 2; 
+    string Status = 3; //Completed, vs In-progress 
+    int32  Difficulty = 4; //1-5 Set by the customer. 
+    int32  Totalwork = 5; //Total amount of work to be done. triage and comms have less work, while research has more. 
+    int32  Completedwork = 6; //How much work has been compelted so far.   
+}

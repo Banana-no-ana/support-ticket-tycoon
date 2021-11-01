@@ -19,7 +19,8 @@ Stage 1: Scenario 1 - Manual assign some cases
 
 
 Day 15 (Oct.30 - Saturday)
-    * Tried to make the tests less flaky. They currently are due to running kills and creating connections on different threads. 
+    * Tried to make the tests less flaky. 
+    * Decided to just do connection creation and worker creation on the main thread. Waiting for the worker to start and then waiting to connect to it definitely isn't ideal though.
 
 Day 14 (Oct.29 - Friday)
     * Added more tests and minor functionality to unload scenario 

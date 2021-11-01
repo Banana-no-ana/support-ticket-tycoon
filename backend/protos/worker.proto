@@ -2,33 +2,14 @@
 //Worker is its own server, listening for actions from the server. 
 syntax = "proto3";
 
+import "protos/case.proto"; 
+
 option go_package = "github.com/Banana-no-ana/support-ticket-tycoon/backend/protos";
 package worker;
-
-
-message Case {
-    int32 caseID =1 ;  
-}
 
 message Response {
     bool Success = 1; 
 }
-
-message CaseState {
-    int32 currentStage = 1; //What is the worker currently working on.
-    repeated CaseStage Stage = 2; 
-    string Status = 3; // Case status Assigne, started, etc.     
-}
-
-message CaseStage {
-    int32 StageID = 1; 
-    string Type = 2; 
-    string Status = 3; //Completed, vs In-progress 
-    int32  Difficulty = 4; //1-5 corresponding to the worker belts. 
-    int32  Totalwork = 5; //Total amount of work to be done. triage and comms have less work, while research has more. 
-    int32  Completedwork = 6; //How much work has been compelted so far.   
-}
-
 
 message WorkerSkill {
     int32 Troubleshoot = 1;
@@ -45,10 +26,10 @@ message WorkerSkill {
 }
 
 service Worker{
-    rpc Assign(Case) returns (Response);
-    rpc Unassign(Case) returns (Response); 
+    rpc Assign(case.Case) returns (Response);
+    rpc Unassign(case.Case) returns (Response); 
     rpc SetWorkerSkills(WorkerSkill) returns (Response); 
     rpc Hello(Response) returns (Response); 
-    rpc GetCaseState(Case) returns (stream CaseState); 
+    rpc GetCaseState(case.Case) returns (stream case.CaseProgress); 
     rpc KillWorker(Response) returns (Response); 
 }

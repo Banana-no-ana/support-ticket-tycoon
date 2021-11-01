@@ -15,7 +15,7 @@ import (
 
 //When the clock ticks, it tocks us.
 func tock() {
-	log.Println("We've been Tock'd ")
+	//Calculate if we need to mark a case as failed.
 }
 
 func caseStatus(w http.ResponseWriter, req *http.Request) {
@@ -29,7 +29,7 @@ func main() {
 	flag.Parse()
 
 	r := mux.NewRouter()
-	r.HandleFunc("/case/{caseid}", caseStatus)
+	r.HandleFunc("/case/get/{caseid}", caseStatus)
 
 	http.Handle("/", r)
 	log.Println("listening on :", *http_port)
