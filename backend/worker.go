@@ -19,13 +19,9 @@ import (
 )
 
 //Global Variables!!!!
-var assignedCases []Case
-var workerID int
+var assignedCases []*pb.Case
+var workerID int32
 var _skills pb.WorkerSkill
-
-type Case struct {
-	CaseID int32
-}
 
 type Worker struct {
 	Name   string //Generated from a list of names
@@ -34,7 +30,13 @@ type Worker struct {
 }
 
 func listCases(w http.ResponseWriter, req *http.Request) {
-	b, _ := json.Marshal(assignedCases)
+	log.Println("Received request to list all cases")
+
+	caseArrary := []pb.Case{}
+	for _, v := range assignedCases {
+		caseArrary = append(caseArrary, *v)
+	}
+	b, _ := json.Marshal(caseArrary)
 	fmt.Fprintf(w, string(b))
 }
 
@@ -42,8 +44,8 @@ func caseAssign(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	caseid, _ := strconv.Atoi(vars["caseid"])
 
-	c := Case{CaseID: int32(caseid)}
-	assignedCases = append(assignedCases, c)
+	c := pb.Case{CaseID: int32(caseid), Status: "Assigned"}
+	assignedCases = append(assignedCases, &c)
 	log.Println("case assigned: ", caseid)
 	fmt.Fprintf(w, "case accepted %d, assigned cases: %d \n", caseid, len(assignedCases))
 
@@ -56,10 +58,54 @@ func unassign(w http.ResponseWriter, req *http.Request) {
 	return
 }
 
+func getCaseNextStage(c *pb.Case) {
+	//We give the customer the current case state.
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	d, _ := customerConn.CustomerReply(ctx, c)
+
+	d.Status = "In-Progress"
+	*c = *d //Update to the contents of the customer's reply
+}
+
+func calcStageProgress(stage *pb.CaseStage) *pb.CaseStage {
+
+}
+
+func workOnCase(c *pb.Case) bool {
+	curStage := c.CaseStages[c.CurrentStage-1]
+	if curStage.Status == "Complete" {
+		//Current stage is complete, let the customer know.
+		c.Status = "Waiting for Customer Response"
+	} else if curStage.Status == "In-Progress" {
+		calcStageProgress(curStage)
+	}
+
+	return false
+
+}
+
 //When the clock ticks, it tocks us.
 func tock() {
 	//Step 1: Look at the current case. What state is it in?
 	//Case details should be given to us on assign.
+	//Case states: New, Assigned, In-Progress, Closed.
+
+	//Work on the current case.
+	curCase := assignedCases[0]
+	switch curCase.Status {
+	case "New":
+		curCase.Status = "Waiting for Customer Reply"
+	case "Waiting for Customer Reply":
+		getCaseNextStage(curCase)
+	case "In-Progress":
+		workOnCase(curCase)
+	case "Closed":
+		assignedCases = assignedCases[1:]
+		//Spend cycle to move to the next case.
+	}
+
+	// Update the API server
 
 	return
 }
@@ -74,8 +120,8 @@ func newWorkerServer() *WorkerServer {
 }
 
 func (s *WorkerServer) Assign(ctx context.Context, in *pb.Case) (*pb.Response, error) {
-	c := Case{CaseID: in.GetCaseID()}
-	assignedCases = append(assignedCases, c)
+	in.Assignee = workerID
+	assignedCases = append(assignedCases, in)
 	log.Println("Case ", in.GetCaseID(), "has been assigned")
 	return &pb.Response{Success: true}, nil
 }
@@ -102,11 +148,11 @@ func listskills(w http.ResponseWriter, req *http.Request) {
 func main() {
 	http_port := flag.String("http_port", ":9000", "set the http listneing port of the worker. ")
 	rpc_port := flag.String("rpc_port", ":10000", "set the rpc listneing port of the worker. ")
-	worker_id_flag := flag.Int("worker_id", 1, "Identify the ID of the worker. ")
+	worker_id_flag := flag.Int("worker_id", 0, "Identify the ID of the worker. ")
 
 	flag.Parse()
 
-	workerID = *worker_id_flag
+	workerID = int32(*worker_id_flag)
 
 	r := mux.NewRouter()
 	r.HandleFunc("/assign/{caseid}", caseAssign)
