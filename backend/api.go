@@ -28,13 +28,15 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var cases []Case
+var cases []*pb.Case
 var workers map[int]*Worker
-var nextCaseId int //TODO: Change to use closure instead
+var nextCaseId int32 = 1 //TODO: Change to use closure instead
 var nextWorkerId int = 100
+var customerConn pb.CustomerClient
 
 type Scenario struct {
-	Workers []Worker `json:"workers"`
+	Difficulty pb.Difficulty
+	Workers    []Worker `json:"workers"`
 }
 
 type Worker struct {
@@ -45,23 +47,22 @@ type Worker struct {
 	Connection pb.WorkerClient //Client connection to the worker.
 }
 
-type Case struct {
-	CaseID            int
-	State             string //State is the current case state
-	Assignee          int    //worker ID.
-	CustomerID        int    //Which customer is it
-	CustomerSentiment int    //Customer's current sentiment of the case (range between 1, 2, 3, 4, 5 (5 being happy))
-}
-
 func generateCase(w http.ResponseWriter, req *http.Request) {
-	c := Case{CaseID: nextCaseId, State: "New", Assignee: 0,
-		CustomerID: rand.Intn(5) + 1, CustomerSentiment: 3}
-	cases = append(cases, c)
+	c := pb.Case{CaseID: nextCaseId, Status: "New", Assignee: 0,
+		CustomerID: rand.Int31()%5 + 1, CustomerSentiment: 3}
+	cases = append(cases, &c)
 	log.Println("case created: ", nextCaseId)
 	b, err := json.Marshal(c)
 	if err != nil {
 		log.Fatal("Failed to marshal caseID: ", nextCaseId)
 	}
+
+	if customerConn != nil {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		customerConn.RegisterCase(ctx, &c)
+	}
+
 	fmt.Fprintf(w, string(b))
 	nextCaseId++
 }
@@ -195,6 +196,39 @@ func addWorkerRequest(w http.ResponseWriter, req *http.Request) {
 	fmt.Fprintf(w, "Added worker %d", ww.WorkerID)
 }
 
+func connectToCustomerService() {
+	var opts []grpc.DialOption
+	opts = append(opts, grpc.WithInsecure())
+	opts = append(opts, grpc.WithBlock())
+	addr := "localhost:8006"
+	conn, _ := grpc.Dial(addr, opts...)
+	// defer worker_conn.Close()
+
+	customerConn = pb.NewCustomerClient(conn)
+}
+
+func createCustomerService() {
+	if customerConn != nil {
+		return
+	}
+
+	serviceaddr := "http://localhost:8005"
+	_, err := http.Get(serviceaddr + "/healthz")
+	if err != nil {
+		log.Println("Creating the customer service ")
+		cmd := exec.Command("go", "run", "customer.go")
+
+		err = cmd.Start()
+		// err := cmd.Run()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	connectToCustomerService()
+
+}
+
 func loadScenario(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	scenarioid := vars["scenarioid"]
@@ -227,9 +261,11 @@ func loadScenario(w http.ResponseWriter, req *http.Request) {
 		go cur.Connection.SetWorkerSkills(ctx, &cur.Skills)
 		numCreatedWorkers++
 	}
+	fmt.Fprintf(w, "Created "+strconv.Itoa(numCreatedWorkers)+" Workers \n")
+
+	createCustomerService()
 
 	fmt.Fprintf(w, "Loaded scenario from: "+f+"\n")
-	fmt.Fprintf(w, "Created "+strconv.Itoa(numCreatedWorkers)+" Workers \n")
 
 }
 
@@ -252,22 +288,34 @@ func unloadScenario(w http.ResponseWriter, req *http.Request) {
 	fmt.Fprintf(w, "Removed all workers")
 }
 
+func RegisterCustomerService(w http.ResponseWriter, req *http.Request) {
+	log.Println("Manually adding customer serivce running on port:8005/6")
+
+	connectToCustomerService()
+
+	fmt.Println(w, "Customer service connected")
+}
+
 func main() {
 	workers = make(map[int]*Worker)
+	createCustomerService()
 
 	r := mux.NewRouter()
 	r.HandleFunc("/healthz", serviceutils.Healthz) //Assign a case to a worker. Must be a post request
 	r.HandleFunc("/kill", serviceutils.Kill)
 
-	r.HandleFunc("/case/create", generateCase)  //generateCase new case and return a case ID.
-	r.HandleFunc("/case/assign", assign)        //Assign a case to a worker. Must be a post request
-	r.HandleFunc("/case/list", listCases)       //List all cases and their statuses
-	r.HandleFunc("/case/get/{caseid}", getcase) //get info of a case.
+	r.HandleFunc("/case/create", generateCase)   //generateCase new case and return a case ID.
+	r.HandleFunc("/case/generate", generateCase) //generateCase new case and return a case ID.
+	r.HandleFunc("/case/assign", assign)         //Assign a case to a worker. Must be a post request
+	r.HandleFunc("/case/list", listCases)        //List all cases and their statuses
+	r.HandleFunc("/case/get/{caseid}", getcase)  //get info of a case.
 
 	// r.HandleFunc("/worker/register", registerWorker) //register a worker. Don't need this
 	r.HandleFunc("/worker/list", listWorkers)           // Expected to be called by the frontend to list all the workers.
 	r.HandleFunc("/worker/create", createWorkerRequest) // Create workers
 	r.HandleFunc("/worker/add", addWorkerRequest)       // Add worker created elsewhere.
+
+	r.HandleFunc("/customer/register", RegisterCustomerService) // Add worker created elsewhere.
 
 	r.HandleFunc("/scenario/load/{scenarioid}", loadScenario) // Create workers
 	r.HandleFunc("/scenario/unload", unloadScenario)          // destroy all the existing workers and clear out all the cases.

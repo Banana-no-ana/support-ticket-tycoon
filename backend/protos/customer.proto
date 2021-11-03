@@ -1,6 +1,25 @@
 //Define what the customer is supposed to do
 syntax = "proto3";
 
+import "protos/case.proto"; 
+import "protos/utils.proto"; 
+
 option go_package = "github.com/Banana-no-ana/support-ticket-tycoon/backend/protos";
 package customer;
 
+
+service Customer {
+    //API registers a case with the customer service.
+    rpc RegisterCase (case.Case) returns (utils.Response); 
+
+    //Ask the customer if the case has expired
+    rpc GetCaseStatus (case.Case) returns (case.Case); 
+
+    //Set the scenario difficulty
+    rpc SetDifficulty (utils.Difficulty) returns (utils.Response);
+
+    //Worker lets the customer know the stage is done, and customer gives the next stage.
+    //Worker gives the completed current stage, and customer calculates if there's a next stage. 
+    //If there is, then that is returned, if not, then customer returns case is complete. 
+    rpc CustomerReply(case.Case) returns (case.Case);
+}

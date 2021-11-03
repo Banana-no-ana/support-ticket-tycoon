@@ -3,13 +3,11 @@
 syntax = "proto3";
 
 import "protos/case.proto"; 
+import "protos/utils.proto"; 
 
 option go_package = "github.com/Banana-no-ana/support-ticket-tycoon/backend/protos";
 package worker;
 
-message Response {
-    bool Success = 1; 
-}
 
 message WorkerSkill {
     int32 Troubleshoot = 1;
@@ -26,10 +24,10 @@ message WorkerSkill {
 }
 
 service Worker{
-    rpc Assign(case.Case) returns (Response);
-    rpc Unassign(case.Case) returns (Response); 
-    rpc SetWorkerSkills(WorkerSkill) returns (Response); 
-    rpc Hello(Response) returns (Response); 
-    rpc GetCaseState(case.Case) returns (stream case.CaseProgress); 
-    rpc KillWorker(Response) returns (Response); 
+    rpc Assign(case.Case) returns (utils.Response);
+    rpc Unassign(case.Case) returns (utils.Response); 
+    rpc SetWorkerSkills(WorkerSkill) returns (utils.Response); 
+    rpc Hello(utils.Response) returns (utils.Response); 
+    rpc GetCaseState(case.Case) returns (stream case.Case); 
+    rpc KillWorker(utils.Response) returns (utils.Response); 
 }

@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package utils;
+option go_package = "github.com/Banana-no-ana/support-ticket-tycoon/backend/protos";
+
+message Response {
+    bool Success = 1; 
+}
+
+
+//Set scenario difficulty
+message Difficulty {
+    int32 minDifficulty = 1; 
+    int32 maxDifficulty = 2; 
+
+    //Difficulty controls how many stages there are (3-5 stages), 
+    //As well as how difficult each stage is
+}

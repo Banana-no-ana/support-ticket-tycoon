@@ -1,6 +1,6 @@
 {
-    "minCaseDifficulty": 1, 
-    "maxCaseDifficulty": 2,
+    "minDifficulty": 1, 
+    "maxDifficulty": 2,
     "workers" : [
         {
          "WorkerID"   : 1,

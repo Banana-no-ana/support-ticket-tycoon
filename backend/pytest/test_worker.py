@@ -23,14 +23,14 @@ class TestWorker:
             assert r.status_code == 200
             assert r.text.startswith("case accepted")
 
-    def test_listcases(self):
+    def test_listcases(self, tolist='100'):
         with requests.get(workeraddr + "case/list") as r: 
             assert r.status_code == 200
-            assert r.text.__contains__("100")
+            assert r.text.__contains__(tolist)
 
 
     def test_addWorkertoAPI(self):
-        data = {"WorkerID":201}
+        data = {'WorkerID':201}
         r = requests.post(adpiaddr + "worker/add", json.dumps(data))
         assert r.status_code == 200
         assert r.text.__contains__("Added")

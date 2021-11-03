@@ -7,6 +7,8 @@ launch a worker with: backend/ go run worker.go
     API Created workers run on 9000+workerID (HTTP), 10000+workerID (RPC)
 launch an apiserver with: backend/ go run api.go
     API server listens on 8001 on HTTP (Frontend), 8002 on RPC (Backend)
+Launch the customer server with: backend/ go run customer.go
+    Customer Server listens on 8005 (HTTP), and 8006 (RPC)
 Launch an image server with: tstgameAssets/processed/ sudo docker run -p 80:80 host-images
     Images are served on :80 
 Launch a customer server with backend/ go run customer.go 

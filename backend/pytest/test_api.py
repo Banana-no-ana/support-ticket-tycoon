@@ -15,7 +15,7 @@ class TestCases:
     def test_create(self):
         r = requests.get(apiaddr + "case/create")
         assert r.status_code == 200
-        assert r.json()['State'] == "New"
+        assert r.json()['Status'] == "New"
 
     def test_list(self):
         r = requests.get(apiaddr + "case/list")
