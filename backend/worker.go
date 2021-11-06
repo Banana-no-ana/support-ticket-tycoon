@@ -46,7 +46,7 @@ func caseAssign(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	caseid, _ := strconv.Atoi(vars["caseid"])
 
-	c := pb.Case{CaseID: int32(caseid), Status: "Assigned"}
+	c := pb.Case{CaseID: int32(caseid), Status: pb.CaseStatus_Assigned}
 	assignedCases = append(assignedCases, &c)
 	log.Println("case assigned: ", caseid)
 	fmt.Fprintf(w, "case accepted %d, assigned cases: %d \n", caseid, len(assignedCases))
@@ -86,15 +86,15 @@ func getCaseNextStage(c *pb.Case) {
 func workOnCase(c *pb.Case) {
 	curStage := c.CaseStages[c.CurrentStage-1] //Stages are 1-indexed.
 
-	if curStage.Status == "Complete" {
+	if curStage.Status == pb.StageStatus_Completed {
 		//Current stage is complete, let the customer know.
-		c.Status = "Waiting for Customer Reply"
-	} else if curStage.Status == "In-Progress" {
+		c.Status = pb.CaseStatus_WOCR
+	} else if curStage.Status == pb.StageStatus_Working {
 		var m int = 0
 
 		if curStage.Completedwork >= curStage.Totalwork {
-			curStage.Status = "Complete"
-			c.Status = "Waiting for Customer Reply"
+			curStage.Status = pb.StageStatus_Completed
+			c.Status = pb.CaseStatus_WOCR
 			return
 		}
 
@@ -137,17 +137,18 @@ func tock() {
 
 	curCase := assignedCases[0]
 	switch curCase.Status {
-	case "New":
-		curCase.Status = "Waiting for Customer Reply"
-	case "Waiting for Customer Reply":
+	case pb.CaseStatus_New:
+		curCase.Status = pb.CaseStatus_WOCR
+	case pb.CaseStatus_WOCR:
 		getCaseNextStage(curCase)
-	case "In-Progress":
+	case pb.CaseStatus_InProgress:
 		workOnCase(curCase)
-	case "Closed":
+	case pb.CaseStatus_Closed:
 		//Move on to the next case. The worker will stop caring about this case
+		log.Println("Case %d is closed now", curCase.CaseID)
 		assignedCases = assignedCases[1:]
 	default:
-		curCase.Status = "New"
+		curCase.Status = pb.CaseStatus_New
 	}
 	// TODO: Update the API server
 

@@ -48,7 +48,7 @@ type Worker struct {
 }
 
 func generateCase(w http.ResponseWriter, req *http.Request) {
-	c := pb.Case{CaseID: nextCaseId, Status: "New", Assignee: 0,
+	c := pb.Case{CaseID: nextCaseId, Status: pb.CaseStatus_New, Assignee: 0,
 		CustomerID: rand.Int31()%5 + 1, CustomerSentiment: 3}
 	cases = append(cases, &c)
 	log.Println("case created: ", nextCaseId)

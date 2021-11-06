@@ -18,6 +18,12 @@ Stage 1: Scenario 1 - Manual assign some cases
     * View cases and workers on a frontend - so we actually can do some assign 
 
 
+Day 16 (Nov.6 - Friday)
+    * Been a few days since I worked on the game. Finally finished implementing worker / customer interaction. 
+    * Still lots of pieces to do for updating the API server with status updates 
+    * Need to write tests for customer stages
+
+
 Day 15 (Oct.30 - Saturday)
     * Tried to make the tests less flaky. 
     * Decided to just do connection creation and worker creation on the main thread. Waiting for the worker to start and then waiting to connect to it definitely isn't ideal though.

@@ -89,7 +89,7 @@ func generateCaseStage(stage int32, last_stage bool) *pb.CaseStage {
 		typ = rand.Intn(9)
 	}
 
-	st := pb.CaseStage{StageID: stage, Status: "In-Progress", Difficulty: dif,
+	st := pb.CaseStage{StageID: stage, Status: pb.StageStatus_Working, Difficulty: dif,
 		Totalwork: 64 + dif*32, Completedwork: 0, Type: pb.SkillEnum(typ)}
 	return &st
 }
@@ -102,7 +102,7 @@ func (CustomerServer) CustomerReply(ctx context.Context, c *pb.Case) (*pb.Case, 
 	//First stage always one of the first 3.
 	//Last stage always one of the last 3.
 	//Middle stages can be any of them.
-	if c.Status == "Waiting for Customer Reply" {
+	if c.Status == pb.CaseStatus_WOCR {
 		//Need to have at least 3 stages, and the same number of stages as the "difficulty"
 		if c.CurrentStage < 3 || c.CurrentStage < dif {
 			c.CurrentStage = c.CurrentStage + 1
@@ -113,11 +113,11 @@ func (CustomerServer) CustomerReply(ctx context.Context, c *pb.Case) (*pb.Case, 
 			curStage := generateCaseStage(c.CurrentStage,
 				c.CurrentStage >= dif && c.CurrentStage >= 3)
 			c.CaseStages = append(c.CaseStages, curStage)
-			c.Status = "In-Progress"
+			c.Status = pb.CaseStatus_InProgress
 			return c, nil
 		} else {
 			//currentstage >= difficulty. That was the last stage, close the case.
-			c.Status = "Closed"
+			c.Status = pb.CaseStatus_Closed
 			return c, nil
 		}
 
