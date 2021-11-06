@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math"
 	"net"
 	"net/http"
 	"strconv"
@@ -22,6 +23,7 @@ import (
 var assignedCases []*pb.Case
 var workerID int32
 var _skills pb.WorkerSkill
+var customerConn pb.CustomerClient
 
 type Worker struct {
 	Name   string //Generated from a list of names
@@ -58,31 +60,68 @@ func unassign(w http.ResponseWriter, req *http.Request) {
 	return
 }
 
+func connectToCustomerService() {
+	var opts []grpc.DialOption
+	opts = append(opts, grpc.WithInsecure())
+	opts = append(opts, grpc.WithBlock())
+	addr := "localhost:8006"
+	conn, _ := grpc.Dial(addr, opts...)
+	// defer worker_conn.Close()
+
+	customerConn = pb.NewCustomerClient(conn)
+}
+
 func getCaseNextStage(c *pb.Case) {
 	//We give the customer the current case state.
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+	if customerConn == nil {
+		connectToCustomerService()
+	}
 	d, _ := customerConn.CustomerReply(ctx, c)
 
-	d.Status = "In-Progress"
 	*c = *d //Update to the contents of the customer's reply
 }
 
-func calcStageProgress(stage *pb.CaseStage) *pb.CaseStage {
+func workOnCase(c *pb.Case) {
+	curStage := c.CaseStages[c.CurrentStage-1] //Stages are 1-indexed.
 
-}
-
-func workOnCase(c *pb.Case) bool {
-	curStage := c.CaseStages[c.CurrentStage-1]
 	if curStage.Status == "Complete" {
 		//Current stage is complete, let the customer know.
-		c.Status = "Waiting for Customer Response"
+		c.Status = "Waiting for Customer Reply"
 	} else if curStage.Status == "In-Progress" {
-		calcStageProgress(curStage)
+		var m int = 0
+
+		if curStage.Completedwork >= curStage.Totalwork {
+			curStage.Status = "Complete"
+			c.Status = "Waiting for Customer Reply"
+			return
+		}
+
+		switch curStage.Type {
+		case pb.SkillEnum_Troubleshoot:
+			m = int(_skills.Troubleshoot)
+		case pb.SkillEnum_Build:
+			m = int(_skills.Build)
+		case pb.SkillEnum_Tech:
+			m = int(_skills.Tech)
+		case pb.SkillEnum_Usage:
+			m = int(_skills.Usage)
+		case pb.SkillEnum_Architecture:
+			m = int(_skills.Architecture)
+		case pb.SkillEnum_Environment:
+			m = int(_skills.Environment)
+		case pb.SkillEnum_Explain:
+			m = int(_skills.Explain)
+		case pb.SkillEnum_Empathy:
+			m = int(_skills.Empathy)
+		case pb.SkillEnum_Relationship:
+			m = int(_skills.Relationship)
+		}
+
+		work := 16 * math.Pow(2, float64(m-int(curStage.Difficulty)))
+		curStage.Completedwork = curStage.Completedwork + int32(work)
 	}
-
-	return false
-
 }
 
 //When the clock ticks, it tocks us.
@@ -92,6 +131,10 @@ func tock() {
 	//Case states: New, Assigned, In-Progress, Closed.
 
 	//Work on the current case.
+	if len(assignedCases) == 0 {
+		return
+	}
+
 	curCase := assignedCases[0]
 	switch curCase.Status {
 	case "New":
@@ -101,11 +144,12 @@ func tock() {
 	case "In-Progress":
 		workOnCase(curCase)
 	case "Closed":
+		//Move on to the next case. The worker will stop caring about this case
 		assignedCases = assignedCases[1:]
-		//Spend cycle to move to the next case.
+	default:
+		curCase.Status = "New"
 	}
-
-	// Update the API server
+	// TODO: Update the API server
 
 	return
 }

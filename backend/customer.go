@@ -23,7 +23,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-var difficulty pb.Difficulty
+var _difficulty *pb.Difficulty
 var cases map[int32]*pb.Case //Mapping caseIDs to case objects.
 
 //When the clock ticks, it tocks us.
@@ -42,7 +42,7 @@ func newCustomerServer() *CustomerServer {
 }
 
 func (CustomerServer) SetDifficulty(ctx context.Context, dif *pb.Difficulty) (*pb.Response, error) {
-	difficulty = *dif
+	_difficulty = dif
 	return &pb.Response{Success: true}, nil
 }
 func (CustomerServer) RegisterCase(ctx context.Context, c *pb.Case) (*pb.Response, error) {
@@ -55,20 +55,68 @@ func (CustomerServer) RegisterCase(ctx context.Context, c *pb.Case) (*pb.Respons
 	return &pb.Response{Success: false}, errors.New("Case " + string(c.CaseID) + " already registered")
 }
 
-func generateCaseStage(stage int32) *pb.CaseStage {
-	return &pb.CaseStage{}
+func getDifficulty() int32 {
+
+	var dif int32 = 0
+
+	if _difficulty == nil {
+		_difficulty = &pb.Difficulty{}
+	}
+
+	if _difficulty.MaxDifficulty == _difficulty.MinDifficulty {
+		dif = _difficulty.MaxDifficulty
+	} else {
+		dif = rand.Int31n(_difficulty.MaxDifficulty-_difficulty.MinDifficulty) + _difficulty.MinDifficulty
+	}
+
+	return dif
+
+}
+
+func generateCaseStage(stage int32, last_stage bool) *pb.CaseStage {
+	dif := getDifficulty()
+
+	var typ int = 0
+
+	if stage == 1 {
+		//Initial stage is only the first 3 types.
+		typ = rand.Intn(3)
+		dif = 0 //Initial triage is always short.
+	} else if last_stage {
+		//Only use the last 3 for final stages
+		typ = rand.Intn(3) + 6
+	} else {
+		typ = rand.Intn(9)
+	}
+
+	st := pb.CaseStage{StageID: stage, Status: "In-Progress", Difficulty: dif,
+		Totalwork: 64 + dif*32, Completedwork: 0, Type: pb.SkillEnum(typ)}
+	return &st
 }
 
 func (CustomerServer) CustomerReply(ctx context.Context, c *pb.Case) (*pb.Case, error) {
-	//Check if they're waiting for our reply.
-	dif := rand.Int31n(difficulty.MaxDifficulty-difficulty.MinDifficulty) + difficulty.MinDifficulty
+	dif := getDifficulty()
+
+	//We calculate the number of stages here.
+
+	//First stage always one of the first 3.
+	//Last stage always one of the last 3.
+	//Middle stages can be any of them.
 	if c.Status == "Waiting for Customer Reply" {
-		if c.CurrentStage < dif {
+		//Need to have at least 3 stages, and the same number of stages as the "difficulty"
+		if c.CurrentStage < 3 || c.CurrentStage < dif {
 			c.CurrentStage = c.CurrentStage + 1
-			curStage := generateCaseStage(c.CurrentStage)
+
+			//This may end up with more than one "last stage", which is fine.
+			log.Println("Generating stage ", strconv.Itoa(int(c.CurrentStage)),
+				" for case: ", strconv.Itoa(int(c.CaseID)))
+			curStage := generateCaseStage(c.CurrentStage,
+				c.CurrentStage >= dif && c.CurrentStage >= 3)
 			c.CaseStages = append(c.CaseStages, curStage)
+			c.Status = "In-Progress"
 			return c, nil
 		} else {
+			//currentstage >= difficulty. That was the last stage, close the case.
 			c.Status = "Closed"
 			return c, nil
 		}

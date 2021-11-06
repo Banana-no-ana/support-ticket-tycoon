@@ -1,6 +1,8 @@
 //Define what the customer is supposed to do
 syntax = "proto3";
 
+import "protos/utils.proto"; 
+
 option go_package = "github.com/Banana-no-ana/support-ticket-tycoon/backend/protos";
 package case;
 
@@ -17,7 +19,7 @@ message Case {
 
 message CaseStage {
     int32 StageID = 1; 
-    string Type = 2;   //The type of activity or skill needed.
+    utils.SkillEnum Type = 2; 
     string Status = 3; //Completed, vs In-progress 
     int32  Difficulty = 4; //1-5 Set by the customer. 
     int32  Totalwork = 5; //Total amount of work to be done. triage and comms have less work, while research has more. 

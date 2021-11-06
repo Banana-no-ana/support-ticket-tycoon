@@ -16,3 +16,17 @@ message Difficulty {
     //Difficulty controls how many stages there are (3-5 stages), 
     //As well as how difficult each stage is
 }
+
+enum SkillEnum {
+    Troubleshoot = 0;
+    Build = 1;
+    Tech = 2;
+
+    Usage = 3; 
+    Architecture = 4; 
+    Environment = 5; 
+
+    Explain = 6; 
+    Empathy = 7;
+    Relationship = 8; //Relationship Management
+}
