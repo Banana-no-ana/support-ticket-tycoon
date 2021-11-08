@@ -12,6 +12,8 @@ import (
 	"strconv"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/Banana-no-ana/support-ticket-tycoon/backend/clockclient"
 	pb "github.com/Banana-no-ana/support-ticket-tycoon/backend/protos"
@@ -21,6 +23,7 @@ import (
 
 //Global Variables!!!!
 var assignedCases []*pb.Case
+var completedCases []*pb.Case
 var workerID int32
 var _skills pb.WorkerSkill
 var customerConn pb.CustomerClient
@@ -40,6 +43,16 @@ func listCases(w http.ResponseWriter, req *http.Request) {
 	}
 	b, _ := json.Marshal(caseArrary)
 	fmt.Fprintf(w, string(b))
+}
+
+func (WorkerServer) GetCaseState(ctx context.Context, c *pb.Case) (*pb.Case, error) {
+	for _, myc := range assignedCases {
+		if myc.CaseID == c.CaseID {
+			return myc, nil
+		}
+	}
+	return &pb.Case{}, status.Error(codes.NotFound, "Case not found")
+
 }
 
 func caseAssign(w http.ResponseWriter, req *http.Request) {
@@ -147,6 +160,7 @@ func tock() {
 		//Move on to the next case. The worker will stop caring about this case
 		log.Println("Case %d is closed now", curCase.CaseID)
 		assignedCases = assignedCases[1:]
+		completedCases = append(completedCases, curCase)
 	default:
 		curCase.Status = pb.CaseStatus_New
 	}

@@ -30,6 +30,6 @@ service Worker{
     rpc Unassign(case.Case) returns (utils.Response); 
     rpc SetWorkerSkills(WorkerSkill) returns (utils.Response); 
     rpc Hello(utils.Response) returns (utils.Response); 
-    rpc GetCaseState(case.Case) returns (stream case.Case); 
+    rpc GetCaseState(case.Case) returns (case.Case); 
     rpc KillWorker(utils.Response) returns (utils.Response); 
 }

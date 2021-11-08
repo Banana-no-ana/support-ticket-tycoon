@@ -21,6 +21,7 @@ import (
 
 	pb "github.com/Banana-no-ana/support-ticket-tycoon/backend/protos"
 	serviceutils "github.com/Banana-no-ana/support-ticket-tycoon/backend/utils"
+
 	"google.golang.org/grpc"
 
 	"os/exec"
@@ -74,11 +75,29 @@ func generateCase(w http.ResponseWriter, req *http.Request) {
 	nextCaseId++
 }
 
+func getCaseUpdate(c *pb.Case) *pb.Case {
+	if c.Assignee == 0 {
+		//Case is unassigned.
+		return c
+	}
+	w := workers[int(c.Assignee)]
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	newc, err := w.Connection.GetCaseState(ctx, c)
+
+	if err != nil {
+		log.Println("Unable to get case update. Error: ", err.Error())
+	}
+
+	return newc
+}
+
 func listCases(w http.ResponseWriter, req *http.Request) {
 
 	caseArray := []pb.Case{}
 
 	for _, c := range cases {
+		*c = *getCaseUpdate(c)
 		caseArray = append(caseArray, *c)
 	}
 
@@ -108,6 +127,11 @@ func assign(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	if _, ok := workers[ar.WorkerID]; !ok {
+		fmt.Println("Worker %d is not found, not assigned", ar.WorkerID)
+		return
+	}
+
 	form_caseID32 := int32(ar.CaseID)
 
 	log.Println("Received request to assign case ", ar.CaseID, "to worker ", ar.WorkerID)
@@ -129,6 +153,9 @@ func assign(w http.ResponseWriter, req *http.Request) {
 		log.Println(err)
 		fmt.Fprintf(w, "Assigning case %d failed", form_caseID32)
 	}
+
+	c := cases[int32(ar.CaseID)]
+	c.Assignee = int32(ar.WorkerID)
 }
 
 func getcase(w http.ResponseWriter, req *http.Request) {
@@ -216,7 +243,7 @@ func addWorkerRequest(w http.ResponseWriter, req *http.Request) {
 	// wtfForm, _ := req.FormValue(("caseid"))
 	// log.Println(wtfForm)
 
-	go createWorkerClient(&ww)
+	createWorkerClient(&ww)
 	fmt.Fprintf(w, "Added worker %d", ww.WorkerID)
 }
 
@@ -291,6 +318,8 @@ func loadScenario(w http.ResponseWriter, req *http.Request) {
 
 	fmt.Fprintf(w, "Loaded scenario from: "+f+"\n")
 
+	log.Println("Finished loading scenario from: " + f + "\n")
+
 }
 
 func destroyWorker(w *Worker) {
@@ -308,8 +337,9 @@ func unloadScenario(w http.ResponseWriter, req *http.Request) {
 		destroyWorker(w)
 		delete(workers, w.WorkerID)
 	}
+	cases = make(map[int32]*pb.Case)
 
-	fmt.Fprintf(w, "Removed all workers")
+	fmt.Fprintf(w, "Removed all workers and cases")
 }
 
 func RegisterCustomerService(w http.ResponseWriter, req *http.Request) {

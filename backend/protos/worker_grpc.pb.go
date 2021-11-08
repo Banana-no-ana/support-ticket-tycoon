@@ -22,7 +22,7 @@ type WorkerClient interface {
 	Unassign(ctx context.Context, in *Case, opts ...grpc.CallOption) (*Response, error)
 	SetWorkerSkills(ctx context.Context, in *WorkerSkill, opts ...grpc.CallOption) (*Response, error)
 	Hello(ctx context.Context, in *Response, opts ...grpc.CallOption) (*Response, error)
-	GetCaseState(ctx context.Context, in *Case, opts ...grpc.CallOption) (Worker_GetCaseStateClient, error)
+	GetCaseState(ctx context.Context, in *Case, opts ...grpc.CallOption) (*Case, error)
 	KillWorker(ctx context.Context, in *Response, opts ...grpc.CallOption) (*Response, error)
 }
 
@@ -70,36 +70,13 @@ func (c *workerClient) Hello(ctx context.Context, in *Response, opts ...grpc.Cal
 	return out, nil
 }
 
-func (c *workerClient) GetCaseState(ctx context.Context, in *Case, opts ...grpc.CallOption) (Worker_GetCaseStateClient, error) {
-	stream, err := c.cc.NewStream(ctx, &Worker_ServiceDesc.Streams[0], "/worker.Worker/GetCaseState", opts...)
+func (c *workerClient) GetCaseState(ctx context.Context, in *Case, opts ...grpc.CallOption) (*Case, error) {
+	out := new(Case)
+	err := c.cc.Invoke(ctx, "/worker.Worker/GetCaseState", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &workerGetCaseStateClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
-}
-
-type Worker_GetCaseStateClient interface {
-	Recv() (*Case, error)
-	grpc.ClientStream
-}
-
-type workerGetCaseStateClient struct {
-	grpc.ClientStream
-}
-
-func (x *workerGetCaseStateClient) Recv() (*Case, error) {
-	m := new(Case)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
+	return out, nil
 }
 
 func (c *workerClient) KillWorker(ctx context.Context, in *Response, opts ...grpc.CallOption) (*Response, error) {
@@ -119,7 +96,7 @@ type WorkerServer interface {
 	Unassign(context.Context, *Case) (*Response, error)
 	SetWorkerSkills(context.Context, *WorkerSkill) (*Response, error)
 	Hello(context.Context, *Response) (*Response, error)
-	GetCaseState(*Case, Worker_GetCaseStateServer) error
+	GetCaseState(context.Context, *Case) (*Case, error)
 	KillWorker(context.Context, *Response) (*Response, error)
 	mustEmbedUnimplementedWorkerServer()
 }
@@ -140,8 +117,8 @@ func (UnimplementedWorkerServer) SetWorkerSkills(context.Context, *WorkerSkill) 
 func (UnimplementedWorkerServer) Hello(context.Context, *Response) (*Response, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Hello not implemented")
 }
-func (UnimplementedWorkerServer) GetCaseState(*Case, Worker_GetCaseStateServer) error {
-	return status.Errorf(codes.Unimplemented, "method GetCaseState not implemented")
+func (UnimplementedWorkerServer) GetCaseState(context.Context, *Case) (*Case, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetCaseState not implemented")
 }
 func (UnimplementedWorkerServer) KillWorker(context.Context, *Response) (*Response, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method KillWorker not implemented")
@@ -231,25 +208,22 @@ func _Worker_Hello_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Worker_GetCaseState_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(Case)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
+func _Worker_GetCaseState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Case)
+	if err := dec(in); err != nil {
+		return nil, err
 	}
-	return srv.(WorkerServer).GetCaseState(m, &workerGetCaseStateServer{stream})
-}
-
-type Worker_GetCaseStateServer interface {
-	Send(*Case) error
-	grpc.ServerStream
-}
-
-type workerGetCaseStateServer struct {
-	grpc.ServerStream
-}
-
-func (x *workerGetCaseStateServer) Send(m *Case) error {
-	return x.ServerStream.SendMsg(m)
+	if interceptor == nil {
+		return srv.(WorkerServer).GetCaseState(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/worker.Worker/GetCaseState",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkerServer).GetCaseState(ctx, req.(*Case))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _Worker_KillWorker_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -294,16 +268,14 @@ var Worker_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Worker_Hello_Handler,
 		},
 		{
+			MethodName: "GetCaseState",
+			Handler:    _Worker_GetCaseState_Handler,
+		},
+		{
 			MethodName: "KillWorker",
 			Handler:    _Worker_KillWorker_Handler,
 		},
 	},
-	Streams: []grpc.StreamDesc{
-		{
-			StreamName:    "GetCaseState",
-			Handler:       _Worker_GetCaseState_Handler,
-			ServerStreams: true,
-		},
-	},
+	Streams:  []grpc.StreamDesc{},
 	Metadata: "protos/worker.proto",
 }

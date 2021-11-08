@@ -22,11 +22,15 @@ Create a case in the API server:
 Create a worker with the API server:
     http://localhost:8001/worker/create
     It will listen on 9101 (HTTP) and 10101(RPC)
+Manually register worker with API server:
+    curl -X POST localhost:8001/case/assign -d '{"WorkerID": 202, "Name" : "Test Worker 202"}'
 
 
 
 Assign case directly with API server: 
-    curl -X POST localhost:8001/case/assign -d "caseid=1&workerid=1"
+    curl -X POST localhost:8001/case/assign -d '{"CaseID": 12, "WorkerID": 1}'
+
+
 
 To re-generate protos: 
 GO: $ protoc --go_out=. --go_opt=paths=source_relative \
@@ -36,8 +40,3 @@ GO: $ protoc --go_out=. --go_opt=paths=source_relative \
 To regenerate docker file for serving images: 
     sudo docker build -t host-images .
     sudo docker run -p 80:80 host-images
-
-
-Some environment setup bits:
-    - Need additional golang proto json encoding: 
-        go get github.com/mitchellh/protoc-gen-go-json

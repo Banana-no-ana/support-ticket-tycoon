@@ -29,6 +29,28 @@ class TestStartWorker:
         r = requests.get(apiaddr + "worker/create")
         assert r.text.startswith("Created worker")
 
+    def test_addworker(self):
+        subprocess.Popen(["go", "run", "../worker.go", "--rpc_port=:10202", "--http_port=:9202", "--worker_id=202"] )
+        time.sleep(0.5)
+
+        worker = {'WorkerID': 202, 'Name': "Test Worker 202", 'FaceID': 1}
+        with requests.post(apiaddr + "worker/add", json.dumps(worker)) as r: 
+            assert r.status_code == 200
+            assert r.text.__contains__("202")
+    
+    def test_addworker_assign(self): 
+        r = requests.get(apiaddr + "case/create")
+        caseid = r.json()['CaseID']
+
+        data = {'CaseID':caseid , 'WorkerID':202}
+        with requests.post(apiaddr+ "case/assign", json.dumps(data)) as r: 
+            assert r.status_code == 200
+            assert r.text.__contains__("successful")
+
+        with requests.get("http://localhost:9202/case/list") as r: 
+            assert r.text.__contains__(str(caseid))
+
+
 
 class TestScenario:
     def test_loadscenario(self): 
@@ -41,18 +63,17 @@ class TestScenario:
         assert r.text.__contains__("Build")
 
     def testAssign(self):
-        data = {'CaseID':1 , 'WorkerID':1}
+        r = requests.get(apiaddr + "case/create")
+        caseid = r.json()['CaseID']
+
+        data = {'CaseID':caseid , 'WorkerID':1}
         with requests.post(apiaddr+ "case/assign", json.dumps(data)) as r: 
             assert r.status_code == 200
             assert r.text.__contains__("successful")
 
-    def testAssign2(self):
-        data = {'caseid':100 , 'workerid':2}
-        with requests.post(apiaddr+ "case/assign", json.dumps(data)) as r: 
-            assert r.status_code == 200
-        
-        with requests.get("http://localhost:9002/case/list") as r: 
-            assert r.text.__contains__("100")
+        with requests.get("http://localhost:9001/case/list") as r: 
+            assert r.text.__contains__(str(caseid))
+
        
     def test_UnloadScenario(self):
         with requests.get(apiaddr + "scenario/unload") as r: 
