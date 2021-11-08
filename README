@@ -36,3 +36,8 @@ GO: $ protoc --go_out=. --go_opt=paths=source_relative \
 To regenerate docker file for serving images: 
     sudo docker build -t host-images .
     sudo docker run -p 80:80 host-images
+
+
+Some environment setup bits:
+    - Need additional golang proto json encoding: 
+        go get github.com/mitchellh/protoc-gen-go-json

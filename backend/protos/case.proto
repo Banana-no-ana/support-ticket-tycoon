@@ -8,12 +8,13 @@ package case;
 
 message Case {
     int32 caseID = 1;
-    CaseStatus Status = 2; 
-    int32 Assignee = 3; 
-    int32 CustomerID = 4;     //Which customer is it
-    int32 CurrentStage = 5; 
+    int32 Assignee = 2; 
+    int32 CustomerID = 3;     //Which customer is it
+    int32 CurrentStage = 4; 
+    int32 CustomerSentiment = 5; //Customer's current sentiment of the case (range between 1, 2, 3, 4, 5 (5 being happy))
     repeated CaseStage CaseStages = 6; 
-    int32 CustomerSentiment = 7; //Customer's current sentiment of the case (range between 1, 2, 3, 4, 5 (5 being happy))
+    CaseStatus Status = 7; 
+    
 }
 
 

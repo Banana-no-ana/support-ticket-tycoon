@@ -48,6 +48,7 @@ type Worker struct {
 }
 
 func generateCase(w http.ResponseWriter, req *http.Request) {
+	log.Println("Received request to create a new case")
 	c := pb.Case{CaseID: nextCaseId, Status: pb.CaseStatus_New, Assignee: 0,
 		CustomerID: rand.Int31()%5 + 1, CustomerSentiment: 3}
 	cases = append(cases, &c)
@@ -60,6 +61,7 @@ func generateCase(w http.ResponseWriter, req *http.Request) {
 	if customerConn != nil {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
+		log.Println("Registering case %d with the customer service", c.CaseID)
 		customerConn.RegisterCase(ctx, &c)
 	}
 
@@ -126,7 +128,15 @@ func registerWorker(w http.ResponseWriter, req *http.Request) {
 }
 
 func listWorkers(w http.ResponseWriter, req *http.Request) {
-	b, err := json.Marshal(workers)
+	log.Println("Received request to list workers ")
+
+	workerArray := []Worker{}
+
+	for _, w := range workers {
+		workerArray = append(workerArray, *w)
+	}
+
+	b, err := json.Marshal(workerArray)
 	if err != nil {
 		log.Fatal("Failed to marshal caseID: ", nextCaseId)
 	}

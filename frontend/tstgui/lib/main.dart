@@ -8,20 +8,23 @@ void main() {
 
 class Case {
   final int CaseID;
-  final String State; //Case State
+  // final String Status; //Case State
   final int Assignee; //Worker UID
+  final int CustomerID; 
 
   Case({
     required this.CaseID,
-    required this.State,
+    // required this.Status,
     required this.Assignee,
+    required this.CustomerID,
   });
 
   factory Case.fromJson(Map<String, dynamic> json) {
     return Case(
-      CaseID: json['CaseID'],
-      State: json['State'],
-      Assignee: json['Assignee'],
+      CaseID: json['caseID'],
+      // Status: json['Status'],
+      Assignee: json['Assignee']?.isEmpty ?? 0,
+      CustomerID: json['CustomerID'],
     );
   }
 }
@@ -54,6 +57,8 @@ Future<Case> createCase() async {
   if (response.statusCode == 200) {
     // If the server did return a 200 OK response,
     // then parse the JSON.
+    var d = jsonDecode(response.body); 
+    Case c = Case.fromJson(d);  
     return Case.fromJson(jsonDecode(response.body));
   } else {
     // If the server did not return a 200 OK response,
@@ -285,7 +290,12 @@ class _CaseCardState extends State<CaseCard> {
           ),),
         ), 
       childWhenDragging: SizedBox(height: 100,   child: Text("Assign Case: " + widget.cardCase.CaseID.toString()) ),
-      onDragCompleted: () => {widget.onDragComplete()}, 
+      onDragCompleted: () => {
+
+        //Let the API server know that the card has moved. 
+
+        //Remove card from where it came from.
+        widget.onDragComplete()}, 
       child: SizedBox(
         width: 250, 
         height: 100, 
@@ -325,7 +335,9 @@ class _NewCaseCardState extends State<NewCaseCard> {
             if (snapshot.hasData) {
               widget.myCase = snapshot.data!; 
               return CaseCard(cardCase: snapshot.data!
-              , onDragComplete: () => {widget.removeFunction(snapshot.data!)} ,); 
+              , onDragComplete: () => {              
+                //Remove it from the original card.
+                widget.removeFunction(snapshot.data!)} ,); 
              }
           }
           else if (snapshot.connectionState == ConnectionState.waiting) {
