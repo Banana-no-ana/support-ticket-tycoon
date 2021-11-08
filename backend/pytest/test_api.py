@@ -2,6 +2,7 @@ import pytest
 import requests
 import subprocess
 import time
+import json
 
 apiaddr = "http://localhost:8001/"
 
@@ -15,7 +16,7 @@ class TestCases:
     def test_create(self):
         r = requests.get(apiaddr + "case/create")
         assert r.status_code == 200
-        assert r.json()['Status'] == "New"
+        assert r.json()['CaseID'] >= 0
 
     def test_list(self):
         r = requests.get(apiaddr + "case/list")
@@ -40,14 +41,14 @@ class TestScenario:
         assert r.text.__contains__("Build")
 
     def testAssign(self):
-        data = {'caseid':1 , 'workerid':1}
-        with requests.post(apiaddr+ "case/assign", data) as r: 
+        data = {'CaseID':1 , 'WorkerID':1}
+        with requests.post(apiaddr+ "case/assign", json.dumps(data)) as r: 
             assert r.status_code == 200
             assert r.text.__contains__("successful")
 
     def testAssign2(self):
         data = {'caseid':100 , 'workerid':2}
-        with requests.post(apiaddr+ "case/assign", data) as r: 
+        with requests.post(apiaddr+ "case/assign", json.dumps(data)) as r: 
             assert r.status_code == 200
         
         with requests.get("http://localhost:9002/case/list") as r: 

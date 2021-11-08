@@ -28,7 +28,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var cases []*pb.Case
+var cases map[int32]*pb.Case
 var workers map[int]*Worker
 var nextCaseId int32 = 1 //TODO: Change to use closure instead
 var nextWorkerId int = 100
@@ -47,15 +47,20 @@ type Worker struct {
 	Connection pb.WorkerClient //Client connection to the worker.
 }
 
+type AssignRequest struct {
+	WorkerID int
+	CaseID   int
+}
+
 func generateCase(w http.ResponseWriter, req *http.Request) {
 	log.Println("Received request to create a new case")
 	c := pb.Case{CaseID: nextCaseId, Status: pb.CaseStatus_New, Assignee: 0,
 		CustomerID: rand.Int31()%5 + 1, CustomerSentiment: 3}
-	cases = append(cases, &c)
+	cases[nextCaseId] = &c
 	log.Println("case created: ", nextCaseId)
 	b, err := json.Marshal(c)
 	if err != nil {
-		log.Fatal("Failed to marshal caseID: ", nextCaseId)
+		log.Fatal("Failed to marshal CaseID: ", nextCaseId)
 	}
 
 	if customerConn != nil {
@@ -70,9 +75,16 @@ func generateCase(w http.ResponseWriter, req *http.Request) {
 }
 
 func listCases(w http.ResponseWriter, req *http.Request) {
-	b, err := json.Marshal(cases)
+
+	caseArray := []pb.Case{}
+
+	for _, c := range cases {
+		caseArray = append(caseArray, *c)
+	}
+
+	b, err := json.Marshal(caseArray)
 	if err != nil {
-		log.Fatal("Failed to marshal caseID: ", nextCaseId)
+		log.Fatal("Failed to marshal the list f cases")
 	}
 	fmt.Fprintf(w, string(b))
 }
@@ -88,22 +100,24 @@ func workerClientConnection(w *Worker) pb.WorkerClient {
 
 func assign(w http.ResponseWriter, req *http.Request) {
 	//TODO: Unassign from current assignee
+	var ar AssignRequest
+	err := json.NewDecoder(req.Body).Decode(&ar)
 
-	if err := req.ParseForm(); err != nil {
-		log.Println(w, "ParseForm() err: %v", err)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	form_caseID, _ := strconv.Atoi(req.FormValue("caseid"))
-	form_caseID32 := int32(form_caseID)
-	form_workerID, _ := strconv.Atoi(req.FormValue("workerid"))
+	form_caseID32 := int32(ar.CaseID)
 
-	log.Println("Received request to assign case ", form_caseID, "to worker ", form_workerID)
+	log.Println("Received request to assign case ", ar.CaseID, "to worker ", ar.WorkerID)
 	// wtfForm, _ := req.FormValue(("caseid"))
 	// log.Println(wtfForm)
 
-	clientConn := workerClientConnection(workers[form_workerID])
+	// Update internal datastructure keeping track of the case
 
+	//Assign to the worker
+	clientConn := workerClientConnection(workers[ar.WorkerID])
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	result, err := clientConn.Assign(ctx, &pb.Case{CaseID: form_caseID32})
@@ -308,6 +322,7 @@ func RegisterCustomerService(w http.ResponseWriter, req *http.Request) {
 
 func main() {
 	workers = make(map[int]*Worker)
+	cases = make(map[int32]*pb.Case)
 	createCustomerService()
 
 	r := mux.NewRouter()

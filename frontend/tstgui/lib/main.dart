@@ -1,3 +1,5 @@
+import 'dart:html';
+
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -21,7 +23,7 @@ class Case {
 
   factory Case.fromJson(Map<String, dynamic> json) {
     return Case(
-      CaseID: json['caseID'],
+      CaseID: json['CaseID'],
       // Status: json['Status'],
       Assignee: json['Assignee']?.isEmpty ?? 0,
       CustomerID: json['CustomerID'],
@@ -232,6 +234,14 @@ class _WorkerCardState extends State<WorkerCard> {
     });
   }
 
+  void assignCard(CaseCard c) {
+    Map data = Map<String, dynamic>(); 
+    data['workerid'] = widget.worker.WorkerID; 
+    data['caseid'] =  c.cardCase.CaseID; 
+
+    http.post(Uri.parse('http://localhost:8001/case/assign'), body: json.encode(data));
+  }
+
   @override
   Widget build(BuildContext context) {
       return DragTarget(
@@ -252,9 +262,12 @@ class _WorkerCardState extends State<WorkerCard> {
             );
       }, 
       onAccept: (CaseCard draggedCard) {
+        assignCard(draggedCard);  
         setState(() {
           var newCase = CaseCard(cardCase: draggedCard.cardCase, 
-            onDragComplete: () => {removeDragged(draggedCard)}); 
+            onDragComplete: () {
+              //Worker lets the API know that the new card is assigned to them
+              removeDragged(draggedCard); }); 
           workerCases.add(newCase); 
           draggedCard.onDragComplete();
         });
@@ -291,9 +304,6 @@ class _CaseCardState extends State<CaseCard> {
         ), 
       childWhenDragging: SizedBox(height: 100,   child: Text("Assign Case: " + widget.cardCase.CaseID.toString()) ),
       onDragCompleted: () => {
-
-        //Let the API server know that the card has moved. 
-
         //Remove card from where it came from.
         widget.onDragComplete()}, 
       child: SizedBox(

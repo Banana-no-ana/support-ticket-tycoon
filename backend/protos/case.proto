@@ -7,7 +7,7 @@ option go_package = "github.com/Banana-no-ana/support-ticket-tycoon/backend/prot
 package case;
 
 message Case {
-    int32 caseID = 1;
+    int32 CaseID = 1;
     int32 Assignee = 2; 
     int32 CustomerID = 3;     //Which customer is it
     int32 CurrentStage = 4; 
