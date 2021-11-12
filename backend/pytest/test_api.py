@@ -74,12 +74,37 @@ class TestScenario:
         with requests.get("http://localhost:9001/case/list") as r: 
             assert r.text.__contains__(str(caseid))
 
+    def testUnAssign(self): 
+        r = requests.get(apiaddr + "case/create")
+        caseid = r.json()['CaseID']
+
+        data = {'CaseID':caseid , 'WorkerID':1}
+        with requests.post(apiaddr+ "case/assign", json.dumps(data)) as r: 
+            assert r.status_code == 200
+            assert r.text.__contains__("successful")
+
+        data = {'CaseID':caseid , 'WorkerID':2}
+        with requests.post(apiaddr+ "case/assign", json.dumps(data)) as r: 
+            assert r.status_code == 200
+            assert r.text.__contains__("successful")
+
+        with requests.get("http://localhost:9002/case/list") as r: 
+            assert r.text.__contains__(str(caseid))
+
+        #unassigned from the first 
+        # time.sleep(1)
+        with requests.get("http://localhost:9001/case/list") as r: 
+            assert r.text.__contains__(str(caseid)) == False
+
        
     def test_UnloadScenario(self):
         with requests.get(apiaddr + "scenario/unload") as r: 
             assert r.status_code == 200
             assert r.text.__contains__("Removed")        
-    
+
+        requests.get("http://localhost:9202/kill")
+
         time.sleep(1)
         with pytest.raises(Exception) as e:
             requests.get("http://localhost:9001/healthz")
+

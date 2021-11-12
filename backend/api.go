@@ -22,6 +22,8 @@ import (
 	pb "github.com/Banana-no-ana/support-ticket-tycoon/backend/protos"
 	serviceutils "github.com/Banana-no-ana/support-ticket-tycoon/backend/utils"
 
+	"google.golang.org/protobuf/encoding/protojson"
+
 	"google.golang.org/grpc"
 
 	"os/exec"
@@ -77,7 +79,7 @@ func generateCase(w http.ResponseWriter, req *http.Request) {
 
 func getCaseUpdate(c *pb.Case) *pb.Case {
 	if c.Assignee == 0 {
-		//Case is unassigned.
+		//Case is not yet assigned.
 		return c
 	}
 	w := workers[int(c.Assignee)]
@@ -94,18 +96,25 @@ func getCaseUpdate(c *pb.Case) *pb.Case {
 
 func listCases(w http.ResponseWriter, req *http.Request) {
 
-	caseArray := []pb.Case{}
+	caseArray := []string{}
 
 	for _, c := range cases {
 		*c = *getCaseUpdate(c)
-		caseArray = append(caseArray, *c)
+		d, _ := protojson.Marshal(c)
+		caseArray = append(caseArray, string(d))
 	}
 
 	b, err := json.Marshal(caseArray)
 	if err != nil {
 		log.Fatal("Failed to marshal the list f cases")
 	}
+
 	fmt.Fprintf(w, string(b))
+
+	// example := &pb.Case{CaseID: 1000}
+	// jsonBytes, _ := protojson.Marshal(example)
+	// fmt.Fprintf(w, string(jsonBytes))
+
 }
 
 func workerClientConnection(w *Worker) pb.WorkerClient {
@@ -118,7 +127,6 @@ func workerClientConnection(w *Worker) pb.WorkerClient {
 }
 
 func assign(w http.ResponseWriter, req *http.Request) {
-	//TODO: Unassign from current assignee
 	var ar AssignRequest
 	err := json.NewDecoder(req.Body).Decode(&ar)
 
@@ -138,14 +146,30 @@ func assign(w http.ResponseWriter, req *http.Request) {
 	// wtfForm, _ := req.FormValue(("caseid"))
 	// log.Println(wtfForm)
 
-	// Update internal datastructure keeping track of the case
+	c := cases[int32(ar.CaseID)]
+	// *c = *getCaseUpdate(&pb.Case{CaseID: int32(ar.CaseID)})
+
+	//Unassign from previous worker
+	if c.Assignee != int32(0) {
+		log.Println("Unassigning case: ", form_caseID32, " from worker: ", c.Assignee)
+		curAssigneeConn := workerClientConnection(workers[int(c.Assignee)])
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		UnAssignResult, _ := curAssigneeConn.Unassign(ctx, &pb.Case{CaseID: form_caseID32})
+		if !UnAssignResult.Success {
+			log.Println("404: UnAssigning case ", form_caseID32, " from worker: ", ar.WorkerID, " failed")
+			fmt.Fprintf(w, "404: UnAssigning case %d from worker %d failed", form_caseID32, ar.WorkerID)
+			return
+		}
+	}
 
 	//Assign to the worker
 	clientConn := workerClientConnection(workers[ar.WorkerID])
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	result, err := clientConn.Assign(ctx, &pb.Case{CaseID: form_caseID32})
-	if result.GetSuccess() {
+	c.Assignee = int32(ar.WorkerID)
+	assignResult, err := clientConn.Assign(ctx, c)
+	if assignResult.GetSuccess() {
 		log.Println("Assigning case ", form_caseID32, " was successful")
 		fmt.Fprintf(w, "Assigning case %d was successful", form_caseID32)
 	} else {
@@ -153,9 +177,6 @@ func assign(w http.ResponseWriter, req *http.Request) {
 		log.Println(err)
 		fmt.Fprintf(w, "Assigning case %d failed", form_caseID32)
 	}
-
-	c := cases[int32(ar.CaseID)]
-	c.Assignee = int32(ar.WorkerID)
 }
 
 func getcase(w http.ResponseWriter, req *http.Request) {

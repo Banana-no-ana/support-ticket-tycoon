@@ -19,7 +19,7 @@ class TestWorker:
             assert r.text == "ok"   
 
     def test_assign(self):
-        with requests.get(workeraddr + "assign/100") as r:
+        with requests.get(workeraddr + "case/assign/100") as r:
             assert r.status_code == 200
             assert r.text.startswith("case accepted")
 
@@ -28,12 +28,15 @@ class TestWorker:
             assert r.status_code == 200
             assert r.text.__contains__(tolist)
 
+    def test_unassign(self): 
+        with requests.get(workeraddr + "case/unassign/100") as r:
+            assert r.status_code == 200
+            assert r.text.startswith("200")
 
-    def test_addWorkertoAPI(self):
-        data = {'WorkerID':201}
-        r = requests.post(adpiaddr + "worker/add", json.dumps(data))
-        assert r.status_code == 200
-        assert r.text.__contains__("Added")
+    def test_unassign_fail(self): 
+        with requests.get(workeraddr + "case/unassign/100") as r:
+            assert r.status_code == 200
+            assert r.text.startswith("404")
 
     def test_endtest(self):
         r = requests.get(workeraddr + "kill")

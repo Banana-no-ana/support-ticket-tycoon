@@ -251,7 +251,8 @@ class _WorkerCardState extends State<WorkerCard> {
               width: 30,
               height: 30, 
               color: Colors.amber,
-              child: Column(
+              child: ListView(
+                scrollDirection: Axis.vertical, 
                 children: [
                   Text('#' + widget.worker.WorkerID.toString() + ' ' + widget.worker.Name),
                   Column(
@@ -272,6 +273,9 @@ class _WorkerCardState extends State<WorkerCard> {
           draggedCard.onDragComplete();
         });
       },
+      onWillAccept: (draggedCard) {
+        return !workerCases.contains(draggedCard); 
+      },
     );
   }
 }
@@ -288,6 +292,12 @@ class CaseCard extends StatefulWidget {
 }
 
 class _CaseCardState extends State<CaseCard> {
+
+  String getCustomerFace(Case c) {
+    return 'http://localhost:80/FACEID_3.png'.replaceAll("FACEID", c.CustomerID.toString()); 
+
+
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -311,7 +321,7 @@ class _CaseCardState extends State<CaseCard> {
         height: 100, 
         child: Row(
           children: [
-            Align(alignment: Alignment.centerLeft, child: Image.network('http://localhost:80/1_5.png',),), 
+            Align(alignment: Alignment.centerLeft, child: Image.network(getCustomerFace(widget.cardCase),),), 
             Container(width:4), 
             Container(width: 1, color: Colors.blueGrey), 
             Container(width:4),

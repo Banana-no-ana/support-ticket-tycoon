@@ -18,6 +18,17 @@ Stage 1: Scenario 1 - Manual assign some cases
     * View cases and workers on a frontend - so we actually can do some assign 
 
 
+
+Day 18 (Nov.11 - Thursday)
+    * Attempted to work on the game while my parents are here. Didn't work well
+    * Managed to implement case unassign as part of the assignment process. 
+    * Need to start working on icons
+
+
+Day 17 (Nov.9 - Tuesday)
+    * got protojson to work. Now serialization is less of an issue. 
+
+
 Day 16 (Nov.6 - Friday)
     * Been a few days since I worked on the game. Finally finished implementing worker / customer interaction. 
     * Still lots of pieces to do for updating the API server with status updates 

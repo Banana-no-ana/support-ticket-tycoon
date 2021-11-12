@@ -2,7 +2,8 @@ package main
 
 import (
 	"context"
-	"encoding/json"
+
+	// "encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -15,6 +16,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"google.golang.org/protobuf/encoding/protojson"
+
 	"github.com/Banana-no-ana/support-ticket-tycoon/backend/clockclient"
 	pb "github.com/Banana-no-ana/support-ticket-tycoon/backend/protos"
 	serviceutils "github.com/Banana-no-ana/support-ticket-tycoon/backend/utils"
@@ -25,7 +28,7 @@ import (
 var assignedCases []*pb.Case
 var completedCases []*pb.Case
 var workerID int32
-var _skills pb.WorkerSkill
+var _skills *pb.WorkerSkill
 var customerConn pb.CustomerClient
 
 type Worker struct {
@@ -37,11 +40,20 @@ type Worker struct {
 func listCases(w http.ResponseWriter, req *http.Request) {
 	log.Println("Received request to list all cases")
 
-	caseArrary := []pb.Case{}
-	for _, v := range assignedCases {
-		caseArrary = append(caseArrary, *v)
-	}
-	b, _ := json.Marshal(caseArrary)
+	// assignedArrary := []string{}
+	// for _, v := range assignedCases {
+	// 	jsonMarshal, _ := protojson.Marshal(v)
+	// 	assignedArrary = append(assignedArrary, string(jsonMarshal))
+	// }
+	// completedArrary := []string{}
+	// for _, v := range assignedCases {
+	// 	jsonMarshal, _ := protojson.Marshal(v)
+	// 	completedArrary = append(completedArrary, string(jsonMarshal))
+	// }
+
+	reply := &pb.ListCaseReply{AssignedCases: assignedCases, CompletedCases: completedCases}
+
+	b, _ := protojson.Marshal(reply)
 	fmt.Fprintf(w, string(b))
 }
 
@@ -68,9 +80,30 @@ func caseAssign(w http.ResponseWriter, req *http.Request) {
 	return
 }
 
-func unassign(w http.ResponseWriter, req *http.Request) {
-	//TODO: Implement this
-	return
+func caseUnAssign(caseid int) bool {
+	log.Println("Received request to unassign case: ", caseid)
+
+	for i, c := range assignedCases {
+		if c.CaseID == int32(caseid) {
+			assignedCases = append(assignedCases[:i], assignedCases[i+1:]...)
+			log.Println("200: Unassigned case ", caseid, " from the worker")
+			return true
+		}
+	}
+	log.Println("404: Case ", caseid, " not found on the worker")
+	return false
+
+}
+
+func caseUnAssignRequest(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	caseid, _ := strconv.Atoi(vars["caseid"])
+
+	if caseUnAssign(caseid) {
+		fmt.Fprintf(w, "200: Unassign case %d from the worker", caseid)
+		return
+	}
+	fmt.Fprintf(w, "404: Case %d not found on the worker", caseid)
 }
 
 func connectToCustomerService() {
@@ -186,7 +219,7 @@ func (s *WorkerServer) Assign(ctx context.Context, in *pb.Case) (*pb.Response, e
 }
 
 func (s *WorkerServer) SetWorkerSkills(c context.Context, sk *pb.WorkerSkill) (*pb.Response, error) {
-	_skills = pb.WorkerSkill(*sk)
+	_skills = sk
 	return &pb.Response{Success: true}, nil
 }
 
@@ -199,8 +232,15 @@ func (s *WorkerServer) KillWorker(context.Context, *pb.Response) (*pb.Response, 
 	return &pb.Response{Success: true}, nil
 }
 
+func (s *WorkerServer) Unassign(ctx context.Context, c *pb.Case) (*pb.Response, error) {
+	if caseUnAssign(int(c.CaseID)) {
+		return &pb.Response{Success: true}, nil
+	}
+	return &pb.Response{Success: false}, nil
+}
+
 func listskills(w http.ResponseWriter, req *http.Request) {
-	m, _ := json.Marshal(_skills)
+	m, _ := protojson.Marshal(_skills)
 	fmt.Fprintf(w, string(m))
 }
 
@@ -213,8 +253,11 @@ func main() {
 
 	workerID = int32(*worker_id_flag)
 
+	_skills = &pb.WorkerSkill{}
+
 	r := mux.NewRouter()
-	r.HandleFunc("/assign/{caseid}", caseAssign)
+	r.HandleFunc("/case/assign/{caseid}", caseAssign)
+	r.HandleFunc("/case/unassign/{caseid}", caseUnAssignRequest)
 	r.HandleFunc("/healthz", serviceutils.Healthz)
 	r.HandleFunc("/kill", serviceutils.Kill)
 	r.HandleFunc("/skill/list", listskills)

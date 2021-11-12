@@ -23,6 +23,11 @@ message WorkerSkill {
     int32 Relationship = 9; 
 }
 
+message ListCaseReply {
+    repeated case.Case AssignedCases = 1; 
+    repeated case.Case CompletedCases = 2; 
+}
+
 
 
 service Worker{

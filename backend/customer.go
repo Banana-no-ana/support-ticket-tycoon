@@ -90,7 +90,7 @@ func generateCaseStage(stage int32, last_stage bool) *pb.CaseStage {
 	}
 
 	st := pb.CaseStage{StageID: stage, Status: pb.StageStatus_Working, Difficulty: dif,
-		Totalwork: 64 + dif*32, Completedwork: 0, Type: pb.SkillEnum(typ)}
+		Totalwork: 192 + dif*64, Completedwork: 0, Type: pb.SkillEnum(typ)}
 	return &st
 }
 

@@ -69,7 +69,7 @@ func newServer() *ClockServer {
 func (s *ClockServer) Register(worker *pb.WorkerRegister, stream pb.Clock_RegisterServer) error {
 	for {
 		stream.Send(&pb.Tick{TickNum: tick})
-		time.Sleep(2000 * time.Millisecond)
+		time.Sleep(500 * time.Millisecond)
 	}
 }
 
