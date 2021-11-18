@@ -152,7 +152,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             const Align(
               alignment: Alignment.topRight,
-              child: Text("Manager"),
+              child: SizedBox(width: 200, child: const Text("Manager"),),
             ),
           ],
         ));
@@ -162,7 +162,7 @@ class _MyHomePageState extends State<MyHomePage> {
 GridView _workerGridView(List<Worker> data) {
   return GridView.builder(
     gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        crossAxisSpacing: 20, maxCrossAxisExtent: 400, mainAxisExtent: 300,  mainAxisSpacing: 20),
+        crossAxisSpacing: 20, maxCrossAxisExtent: 350, mainAxisExtent: 300,  mainAxisSpacing: 20),
     itemCount: data.length,
     padding: EdgeInsets.all(10),
     itemBuilder: (BuildContext context, int index) {
@@ -192,6 +192,7 @@ class _NewCasColumnState extends State<NewCaseColumn> {
   @override
   Widget build(BuildContext context) {
     return Column(children: [
+      const SizedBox(height:20, width: 140, ), 
       ElevatedButton(
         child: const Text('Generate Case'),
         onPressed: () {
@@ -220,63 +221,174 @@ class WorkerCard extends StatefulWidget {
 }
 
 class _WorkerCardState extends State<WorkerCard> {
-  List<CaseCard> workerCases = []; 
+  List<CaseCard> workerCases = [];
 
   @override
   void initState() {
     super.initState();
   }
 
+  String getWorkerFace(int workerFaceID) {
+    return 'http://localhost:80/worker_faces/FACEID.png'
+        .replaceAll("FACEID", workerFaceID.toString());
+  }
+
   void removeDragged(CaseCard toRemove) {
-    workerCases.removeWhere((e) => e.cardCase.CaseID == toRemove.cardCase.CaseID); 
-    setState(() {
-      
-    });
+    workerCases
+        .removeWhere((e) => e.cardCase.CaseID == toRemove.cardCase.CaseID);
+    setState(() {});
   }
 
   void assignCard(CaseCard c) {
-    Map data = Map<String, dynamic>(); 
-    data['workerid'] = widget.worker.WorkerID; 
-    data['caseid'] =  c.cardCase.CaseID; 
+    Map data = Map<String, dynamic>();
+    data['workerid'] = widget.worker.WorkerID;
+    data['caseid'] = c.cardCase.CaseID;
 
-    http.post(Uri.parse('http://localhost:8001/case/assign'), body: json.encode(data));
+    http.post(Uri.parse('http://localhost:8001/case/assign'),
+        body: json.encode(data));
   }
 
   @override
   Widget build(BuildContext context) {
-      return DragTarget(
-        builder: (BuildContext context, List<dynamic> accepted,
+    return DragTarget(
+      builder: (BuildContext context, List<dynamic> accepted,
           List<dynamic> rejected) {
         return Container(
-              width: 30,
-              height: 30, 
-              color: Colors.amber,
-              child: ListView(
-                scrollDirection: Axis.vertical, 
+          color: Colors.black12,
+          child: Column(
+            children: [
+              Row( children: [
+                Column(
+                  children: [Text('Agent ' + widget.worker.WorkerID.toString() + ': ' + widget.worker.Name),
+                  const WorkerSkillTable()],),                 
+                Align(alignment: Alignment.topRight,
+                  child: Image.network(getWorkerFace(widget.worker.FaceID), width: 100, ),),],),
+              const Divider(height:15, thickness:3, indent:10, endIndent: 10, color: Colors.black26,), 
+              Column(
+                // scrollDirection: Axis.vertical,                
                 children: [
-                  Text('#' + widget.worker.WorkerID.toString() + ' ' + widget.worker.Name),
                   Column(
                     children: workerCases,
-                  ), 
+                  ),
                 ],
               )
-            );
-      }, 
+            ],
+          ),
+        );
+      },
       onAccept: (CaseCard draggedCard) {
-        assignCard(draggedCard);  
+        assignCard(draggedCard);
         setState(() {
-          var newCase = CaseCard(cardCase: draggedCard.cardCase, 
-            onDragComplete: () {
-              //Worker lets the API know that the new card is assigned to them
-              removeDragged(draggedCard); }); 
-          workerCases.add(newCase); 
+          var newCase = CaseCard(
+              cardCase: draggedCard.cardCase,
+              onDragComplete: () {
+                //Worker lets the API know that the new card is assigned to them
+                removeDragged(draggedCard);
+              });
+          workerCases.add(newCase);
           draggedCard.onDragComplete();
         });
       },
       onWillAccept: (draggedCard) {
-        return !workerCases.contains(draggedCard); 
+        return !workerCases.contains(draggedCard);
       },
     );
+  }
+}
+
+class WorkerSkillTable extends StatelessWidget {
+  const WorkerSkillTable({ Key? key }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 160,
+      child: Table(
+      columnWidths: const <int, TableColumnWidth> {
+        0: FlexColumnWidth(0.25), 
+        1: FixedColumnWidth(24), 
+        2: FixedColumnWidth(24),
+        3: FlexColumnWidth(0.2), 
+        4: FixedColumnWidth(24), 
+        5: FixedColumnWidth(24), 
+        6: FlexColumnWidth(0.3), 
+        7: FixedColumnWidth(24), 
+        8: FlexColumnWidth(0.15), 
+      },
+      children: [
+        TableRow(children: [
+              Container(),
+              Icon(Icons.live_help, color: Colors.green,), 
+              Icon(Icons.zoom_in, color: Colors.green,), 
+              Container(),
+              Icon(Icons.admin_panel_settings, color: Colors.green,),
+              Icon(Icons.bug_report, color: Colors.green,),
+              Container(),
+              Icon(Icons.closed_caption, color: Colors.green,),
+              Container(),
+        ]), 
+        TableRow(children: [
+              Container(),
+              Icon(Icons.construction, color: Colors.green,), 
+              Icon(Icons.backup, color: Colors.green,), 
+              Container(),
+              Icon(Icons.extension, color: Colors.green,),
+              Icon(Icons.dashboard, color: Colors.green,),
+              Container(),
+              Icon(Icons.mood, color: Colors.green,),
+              Container(),
+        ]), 
+      ],
+    ))
+      ; 
+  }
+}
+
+class WorkerSkillCard extends StatelessWidget {
+  const WorkerSkillCard({ Key? key }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+        // mainAxisSize: MainAxisSize.max,
+        children: [
+          SizedBox(
+            height: 60,
+            width: 70,
+            child: GridView.count(crossAxisCount: 2,
+          // shrinkWrap: true, 
+            padding: const EdgeInsets.all(4), 
+            children: [
+              Icon(Icons.live_help, color: Colors.green,), 
+              Icon(Icons.construction, color: Colors.green,), 
+              Icon(Icons.zoom_in, color: Colors.green,),
+              Icon(Icons.backup, color: Colors.green,),
+            ],)),
+          SizedBox(
+            height: 60,
+            width: 70,
+            child: GridView.count(crossAxisCount: 2,
+          // shrinkWrap: true, 
+            padding: const EdgeInsets.all(4), 
+            children: [
+              Icon(Icons.admin_panel_settings, color: Colors.green,), 
+              Icon(Icons.extension, color: Colors.green,), 
+              Icon(Icons.bug_report, color: Colors.green,), 
+              Icon(Icons.dashboard, color: Colors.green,),              
+            ],)), 
+          SizedBox(
+            height: 60,
+            width: 35,
+            child: GridView.count(crossAxisCount: 1,
+            shrinkWrap: true, 
+            // padding: const EdgeInsets.all(4), 
+            children: [
+              Icon(Icons.closed_caption, color: Colors.green,), 
+              Icon(Icons.mood, color: Colors.green,),             
+            ],)),  
+        
+        ],
+          );
   }
 }
 
@@ -294,9 +406,7 @@ class CaseCard extends StatefulWidget {
 class _CaseCardState extends State<CaseCard> {
 
   String getCustomerFace(Case c) {
-    return 'http://localhost:80/FACEID_3.png'.replaceAll("FACEID", c.CustomerID.toString()); 
-
-
+    return 'http://localhost:80/customer_faces/FACEID_3.png'.replaceAll("FACEID", c.CustomerID.toString()); 
   }
 
   @override
@@ -316,17 +426,22 @@ class _CaseCardState extends State<CaseCard> {
       onDragCompleted: () => {
         //Remove card from where it came from.
         widget.onDragComplete()}, 
-      child: SizedBox(
-        width: 250, 
-        height: 100, 
-        child: Row(
-          children: [
-            Align(alignment: Alignment.centerLeft, child: Image.network(getCustomerFace(widget.cardCase),),), 
+      child: Align( alignment: Alignment.topLeft, 
+        child: SizedBox(
+          width: 140, height: 60, 
+          child: Row(
+            children: [
+            SizedBox(
+              width: 60,
+              height: 60,              
+              //Customer face Image
+              child: Align(alignment: Alignment.center, child: Image.network(getCustomerFace(widget.cardCase),),),
+            ),             
             Container(width:4), 
             Container(width: 1, color: Colors.blueGrey), 
             Container(width:4),
             Center(child: Text("Case : " + widget.cardCase.CaseID.toString())), 
-        ],) ),
+        ],) ),)
     ); 
   }
 }

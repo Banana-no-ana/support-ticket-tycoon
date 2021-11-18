@@ -12,16 +12,18 @@ package worker;
 message WorkerSkill {
     int32 Troubleshoot = 1;
     int32 Build = 2;
-    int32 Tech = 3;
+    int32 Research = 3;
+    int32 WebTech = 4;
+    
+    int32 Admin = 5;
+    int32 Usage = 6; 
+    int32 Architecture = 7; 
+    int32 Ecosystem = 8; 
 
-    int32 Usage = 4; 
-    int32 Architecture = 5; 
-    int32 Environment = 6; 
-
-    int32 Explain = 7; 
-    int32 Empathy = 8;
-    int32 Relationship = 9; 
+    int32 Explain = 9;
+    int32 Empathy = 10;
 }
+
 
 message ListCaseReply {
     repeated case.Case AssignedCases = 1; 

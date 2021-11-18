@@ -80,13 +80,13 @@ func generateCaseStage(stage int32, last_stage bool) *pb.CaseStage {
 
 	if stage == 1 {
 		//Initial stage is only the first 3 types.
-		typ = rand.Intn(3)
+		typ = rand.Intn(4)
 		dif = 0 //Initial triage is always short.
 	} else if last_stage {
-		//Only use the last 3 for final stages
-		typ = rand.Intn(3) + 6
+		//Only use the last 2 for final stages
+		typ = rand.Intn(2) + 8
 	} else {
-		typ = rand.Intn(9)
+		typ = rand.Intn(10)
 	}
 
 	st := pb.CaseStage{StageID: stage, Status: pb.StageStatus_Working, Difficulty: dif,

@@ -69,7 +69,7 @@ func generateCase(w http.ResponseWriter, req *http.Request) {
 	if customerConn != nil {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		log.Println("Registering case %d with the customer service", c.CaseID)
+		log.Println("Registering case ", c.CaseID, " with the customer service")
 		customerConn.RegisterCase(ctx, &c)
 	}
 
@@ -136,7 +136,7 @@ func assign(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if _, ok := workers[ar.WorkerID]; !ok {
-		fmt.Println("Worker %d is not found, not assigned", ar.WorkerID)
+		fmt.Println("404 Failed: Worker ", ar.WorkerID, " is not found, not assigned")
 		return
 	}
 
@@ -237,7 +237,7 @@ func createWorkerRequest(w http.ResponseWriter, req *http.Request) {
 
 	//Create a new worker.
 	log.Println("Starting worker: ", nextWorkerId)
-	worker := Worker{WorkerID: nextWorkerId, FaceID: 1, Name: "Unnamed"}
+	worker := Worker{WorkerID: nextWorkerId, FaceID: rand.Intn(80), Name: "Unnamed"}
 	// n := "-worker_id=" + strconv.Itoa(nextWorkerId)
 
 	createOrReplaceWorker(&worker)
@@ -327,6 +327,7 @@ func loadScenario(w http.ResponseWriter, req *http.Request) {
 	for _, worker := range scenario.Workers {
 		//TODO: What do we do if these workers exist? Kill their existing work probably.
 		cur := Worker(worker)
+		cur.FaceID = rand.Intn(80)
 		createOrReplaceWorker(&cur)
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()

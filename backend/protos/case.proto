@@ -1,8 +1,6 @@
 //Define what the customer is supposed to do
 syntax = "proto3";
 
-import "protos/utils.proto"; 
-
 option go_package = "github.com/Banana-no-ana/support-ticket-tycoon/backend/protos";
 package case;
 
@@ -14,13 +12,29 @@ message Case {
     int32 CustomerSentiment = 5; //Customer's current sentiment of the case (range between 1, 2, 3, 4, 5 (5 being happy))
     repeated CaseStage CaseStages = 6; 
     CaseStatus Status = 7; 
-    
 }
+
+
+enum SkillEnum {
+    Troubleshoot = 0;
+    Build = 1;
+    Research = 2;
+    WebTech = 3;
+   
+    Admin = 4;
+    Usage = 5; 
+    Architecture = 6; 
+    Ecosystem = 7; 
+
+    Explain = 8;
+    Empathy = 9;
+}
+
 
 
 message CaseStage {
     int32 StageID = 1; 
-    utils.SkillEnum Type = 2; 
+    SkillEnum Type = 2; 
     StageStatus Status = 3; //Completed, vs In-progress 
     int32  Difficulty = 4; //1-5 Set by the customer. 
     int32  Totalwork = 5; //Total amount of work to be done. triage and comms have less work, while research has more. 

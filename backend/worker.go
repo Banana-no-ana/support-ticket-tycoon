@@ -149,20 +149,22 @@ func workOnCase(c *pb.Case) {
 			m = int(_skills.Troubleshoot)
 		case pb.SkillEnum_Build:
 			m = int(_skills.Build)
-		case pb.SkillEnum_Tech:
-			m = int(_skills.Tech)
+		case pb.SkillEnum_Research:
+			m = int(_skills.Research)
+		case pb.SkillEnum_WebTech:
+			m = int(_skills.WebTech)
+		case pb.SkillEnum_Admin:
+			m = int(_skills.Admin)
 		case pb.SkillEnum_Usage:
 			m = int(_skills.Usage)
 		case pb.SkillEnum_Architecture:
 			m = int(_skills.Architecture)
-		case pb.SkillEnum_Environment:
-			m = int(_skills.Environment)
+		case pb.SkillEnum_Ecosystem:
+			m = int(_skills.Ecosystem)
 		case pb.SkillEnum_Explain:
 			m = int(_skills.Explain)
 		case pb.SkillEnum_Empathy:
 			m = int(_skills.Empathy)
-		case pb.SkillEnum_Relationship:
-			m = int(_skills.Relationship)
 		}
 
 		work := 16 * math.Pow(2, float64(m-int(curStage.Difficulty)))
