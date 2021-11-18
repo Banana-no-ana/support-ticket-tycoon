@@ -221,7 +221,7 @@ class WorkerCard extends StatefulWidget {
   _WorkerCardState createState() => _WorkerCardState();
 }
 
-class _WorkerCardState extends State<WorkerCard> {
+class _WorkerCardState extends State<WorkerCard> with TickerProviderStateMixin {
   List<CaseCard> workerCases = [];
 
   @override
@@ -284,9 +284,10 @@ class _WorkerCardState extends State<WorkerCard> {
           var newCase = CaseCard(
               cardCase: draggedCard.cardCase,
               onDragComplete: () {
-                //Worker lets the API know that the new card is assigned to them
+                //Here we need to reset the removeDraggedFunction
                 removeDragged(draggedCard);
               });
+          // newCase.incrupController.forward(); 
           workerCases.add(newCase);
           draggedCard.onDragComplete();
         });
@@ -346,58 +347,10 @@ class WorkerSkillTable extends StatelessWidget {
   }
 }
 
-class WorkerSkillCard extends StatelessWidget {
-  const WorkerSkillCard({ Key? key }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-        // mainAxisSize: MainAxisSize.max,
-        children: [
-          SizedBox(
-            height: 60,
-            width: 70,
-            child: GridView.count(crossAxisCount: 2,
-          // shrinkWrap: true, 
-            padding: const EdgeInsets.all(4), 
-            children: [
-              Icon(Icons.live_help, color: Colors.green,), 
-              Icon(Icons.construction, color: Colors.green,), 
-              Icon(Icons.zoom_in, color: Colors.green,),
-              Icon(Icons.backup, color: Colors.green,),
-            ],)),
-          SizedBox(
-            height: 60,
-            width: 70,
-            child: GridView.count(crossAxisCount: 2,
-          // shrinkWrap: true, 
-            padding: const EdgeInsets.all(4), 
-            children: [
-              Icon(Icons.admin_panel_settings, color: Colors.green,), 
-              Icon(Icons.extension, color: Colors.green,), 
-              Icon(Icons.bug_report, color: Colors.green,), 
-              Icon(Icons.dashboard, color: Colors.green,),              
-            ],)), 
-          SizedBox(
-            height: 60,
-            width: 35,
-            child: GridView.count(crossAxisCount: 1,
-            shrinkWrap: true, 
-            // padding: const EdgeInsets.all(4), 
-            children: [
-              Icon(Icons.closed_caption, color: Colors.green,), 
-              Icon(Icons.mood, color: Colors.green,),             
-            ],)),  
-        
-        ],
-          );
-  }
-}
-
-
 class CaseCard extends StatefulWidget {
   final Case cardCase; 
   final Function onDragComplete; 
+  
 
   CaseCard({ Key? key, required this.cardCase, required this.onDragComplete}) : super(key: key);
 
@@ -405,13 +358,23 @@ class CaseCard extends StatefulWidget {
   _CaseCardState createState() => _CaseCardState();
 }
 
-class _CaseCardState extends State<CaseCard> {
+class _CaseCardState extends State<CaseCard> with TickerProviderStateMixin{
+  late AnimationController incrupController;
 
   String getCustomerFace(Case c) {
     return 'http://localhost:80/customer_faces/FACEID_3.png'.replaceAll("FACEID", c.CustomerID.toString()); 
   }
 
-  
+  @override
+  void initState() {
+    incrupController = AnimationController(vsync: this, 
+    duration: const Duration(seconds:6))..addListener(() {
+        setState(() {});
+      });
+    incrupController.forward();
+    super.initState();
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -432,7 +395,7 @@ class _CaseCardState extends State<CaseCard> {
         widget.onDragComplete()}, 
       child: Align( alignment: Alignment.topLeft, 
         child: SizedBox(
-          width: 140, height: 60, 
+          width: 140, height: 70, 
           child: Row(
             children: [
             SizedBox(
@@ -444,7 +407,13 @@ class _CaseCardState extends State<CaseCard> {
             Container(width:4), 
             Container(width: 1, color: Colors.blueGrey), 
             Container(width:4),
-            Center(child: Text("Case : " + widget.cardCase.CaseID.toString())), 
+            SizedBox(
+              width: 70,
+              child: Center(child: Column(children: [
+              Text("Case : " + widget.cardCase.CaseID.toString()), 
+              LinearProgressIndicator(value: incrupController.value,), 
+            ] ,), 
+              ),)             
         ],) ),)
     ); 
   }
@@ -462,7 +431,7 @@ class NewCaseCard extends StatefulWidget {
   State<NewCaseCard> createState() => _NewCaseCardState();
 }
 
-class _NewCaseCardState extends State<NewCaseCard> {
+class _NewCaseCardState extends State<NewCaseCard> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -473,11 +442,13 @@ class _NewCaseCardState extends State<NewCaseCard> {
           if (snapshot.connectionState == ConnectionState.done) {
             if (snapshot.hasData) {
               widget.myCase = snapshot.data!; 
-              return CaseCard(cardCase: snapshot.data!
-              , onDragComplete: () => {              
+              var card = CaseCard(cardCase: snapshot.data!, 
+                onDragComplete: () => {              
                 //Remove it from the original card.
                 widget.removeFunction(snapshot.data!)} ,); 
+              return card; 
              }
+              
           }
           else if (snapshot.connectionState == ConnectionState.waiting) {
             return Column(
