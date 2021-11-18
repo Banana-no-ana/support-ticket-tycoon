@@ -203,6 +203,7 @@ class _NewCasColumnState extends State<NewCaseColumn> {
           });
         },
       ),
+      const Divider(height: 15), 
       Column(
         children: newCases,
       ),
@@ -260,6 +261,7 @@ class _WorkerCardState extends State<WorkerCard> {
               Row( children: [
                 Column(
                   children: [Text('Agent ' + widget.worker.WorkerID.toString() + ': ' + widget.worker.Name),
+                  const Divider(height: 15,), 
                   const WorkerSkillTable()],),                 
                 Align(alignment: Alignment.topRight,
                   child: Image.network(getWorkerFace(widget.worker.FaceID), width: 100, ),),],),
@@ -408,6 +410,8 @@ class _CaseCardState extends State<CaseCard> {
   String getCustomerFace(Case c) {
     return 'http://localhost:80/customer_faces/FACEID_3.png'.replaceAll("FACEID", c.CustomerID.toString()); 
   }
+
+  
 
   @override
   Widget build(BuildContext context) {
