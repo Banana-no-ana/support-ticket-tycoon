@@ -63,6 +63,11 @@ func (WorkerServer) GetCaseState(ctx context.Context, c *pb.Case) (*pb.Case, err
 			return myc, nil
 		}
 	}
+	for _, myc := range completedCases {
+		if myc.CaseID == c.CaseID {
+			return myc, nil
+		}
+	}
 	return &pb.Case{}, status.Error(codes.NotFound, "Case not found")
 
 }

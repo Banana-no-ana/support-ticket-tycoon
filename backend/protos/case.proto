@@ -7,7 +7,7 @@ package case;
 message Case {
     int32 CaseID = 1;
     int32 Assignee = 2; 
-    int32 CustomerID = 3;     //Which customer is it
+    int32 CustomerID = 3;     //Not currently used right now, but that's OK.
     int32 CurrentStage = 4; 
     int32 CustomerSentiment = 5; //Customer's current sentiment of the case (range between 1, 2, 3, 4, 5 (5 being happy))
     repeated CaseStage CaseStages = 6; 

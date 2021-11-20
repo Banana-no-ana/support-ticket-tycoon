@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:html';
 
 import 'package:flutter/material.dart';
@@ -13,12 +14,14 @@ class Case {
   // final String Status; //Case State
   final int Assignee; //Worker UID
   final int CustomerID; 
+  final int CustomerSentiment;
 
   Case({
     required this.CaseID,
     // required this.Status,
     required this.Assignee,
     required this.CustomerID,
+    required this.CustomerSentiment,
   });
 
   factory Case.fromJson(Map<String, dynamic> json) {
@@ -27,6 +30,7 @@ class Case {
       // Status: json['Status'],
       Assignee: json['Assignee']?.isEmpty ?? 0,
       CustomerID: json['CustomerID'],
+      CustomerSentiment: json['CustomerSentiment'] ?? 3
     );
   }
 }
@@ -222,7 +226,7 @@ class WorkerCard extends StatefulWidget {
 }
 
 class _WorkerCardState extends State<WorkerCard> with TickerProviderStateMixin {
-  List<CaseCard> workerCases = [];
+  List<CaseCard2> workerCases = [];
 
   @override
   void initState() {
@@ -234,13 +238,13 @@ class _WorkerCardState extends State<WorkerCard> with TickerProviderStateMixin {
         .replaceAll("FACEID", workerFaceID.toString());
   }
 
-  void removeDragged(CaseCard toRemove) {
+  void removeDragged(CaseContainer toRemove) {
     workerCases
         .removeWhere((e) => e.cardCase.CaseID == toRemove.cardCase.CaseID);
     setState(() {});
   }
 
-  void assignCard(CaseCard c) {
+  void assignCard(CaseContainer c) {
     Map data = Map<String, dynamic>();
     data['workerid'] = widget.worker.WorkerID;
     data['caseid'] = c.cardCase.CaseID;
@@ -278,17 +282,18 @@ class _WorkerCardState extends State<WorkerCard> with TickerProviderStateMixin {
           ),
         );
       },
-      onAccept: (CaseCard draggedCard) {
+      onAccept: (CaseContainer draggedCard) {
         assignCard(draggedCard);
         setState(() {
-          var newCase = CaseCard(
+          var newCase = CaseCard2(
               cardCase: draggedCard.cardCase,
+              initialIncrupProgressValue: draggedCard.incrupController.value, 
               onDragComplete: () {
-                //Here we need to reset the removeDraggedFunction
+                //the target draggable with call this function so to remove it from the existing worker
                 removeDragged(draggedCard);
-              });
-          // newCase.incrupController.forward(); 
-          workerCases.add(newCase);
+              }, );
+          // newCase.incrupController.forward();  
+          workerCases.add(newCase);          
           draggedCard.onDragComplete();
         });
       },
@@ -347,34 +352,164 @@ class WorkerSkillTable extends StatelessWidget {
   }
 }
 
-class CaseCard extends StatefulWidget {
+//Define interface for new casecard and old case cards
+abstract class CaseContainer {
   final Case cardCase; 
-  final Function onDragComplete; 
-  
+  final Function onDragComplete;
+  late AnimationController incrupController;
+  final double initialIncrupProgressValue; 
 
-  CaseCard({ Key? key, required this.cardCase, required this.onDragComplete}) : super(key: key);
+  CaseContainer({ Key? key, required this.cardCase, required this.onDragComplete,required this.initialIncrupProgressValue, }); 
+}
+
+//New case card because dynamically figuring out sizing new cases and existing cases is too hard :(
+class CaseCard2 extends StatefulWidget implements CaseContainer{
+  final Case cardCase; 
+  final Function onDragComplete;
+  late AnimationController incrupController;
+  final double initialIncrupProgressValue; 
+
+  CaseCard2({ Key? key, required this.cardCase, required this.onDragComplete,required this.initialIncrupProgressValue, }) : super(key: key);
+
+  @override
+  _CaseCard2State createState() => _CaseCard2State();
+}
+
+class _CaseCard2State extends State<CaseCard2> with TickerProviderStateMixin {
+  String getCustomerFace(Case c) {
+    return 'http://localhost:80/customer_faces/FACEID_CUSTOMER_SENTIMENT.png'.
+    replaceAll("FACEID", c.CustomerID.toString()).
+    replaceAll("CUSTOMER_SENTIMENT", c.CustomerSentiment.toString()); 
+  }
+
+
+  Future<Case> getCaseUpdate() async {
+    final response = await http.get(
+      Uri.parse('http://localhost:8001/case/get'),
+    );
+
+    if (response.statusCode == 200) {
+      // If the server did return a 200 OK response,
+      // then parse the JSON.
+      var d = jsonDecode(response.body); 
+      Case c = Case.fromJson(d);  
+      return Case.fromJson(jsonDecode(response.body));
+    } else {
+      // If the server did not return a 200 OK response,
+      // then throw an exception.
+      throw Exception('Failed to get Case');
+    }
+  }
+
+  @override
+  void initState() {
+    widget.incrupController = AnimationController(vsync: this, 
+    duration: const Duration(seconds:8))..addListener(() {
+        setState(() {});
+      });
+    Timer.periodic(Duration(milliseconds: 600), (Timer t) {
+      //First make the network call to get case updates. Then setstate 
+
+      setState(() {
+        
+      });
+     }); 
+    widget.incrupController.value = widget.initialIncrupProgressValue; 
+    widget.incrupController.forward();
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    widget.incrupController.dispose(); 
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Draggable(
+      data: widget,
+      feedback: FittedBox(
+          fit: BoxFit.contain,
+          child: Text("Assign to", 
+          textAlign: TextAlign.justify,
+          style: TextStyle(
+            color: Colors.black12,
+            fontWeight: FontWeight.bold,
+          ),),
+        ), 
+      childWhenDragging: SizedBox(height: 100,   child: Text("Assign Case: " + widget.cardCase.CaseID.toString()) ),
+      onDragCompleted: () => {
+        //Remove card from where it came from.
+        widget.onDragComplete()}, 
+      child: Align( alignment: Alignment.topLeft, 
+        child: SizedBox(
+          height: 70, 
+          child: Row(
+            children: [
+            Container(width: 3), 
+            SizedBox(
+              width: 60,
+              height: 70,              
+              //Customer face Image
+              child: Column(
+                children: [
+                  SizedBox( width: 60,
+                    height: 60,  child: Align(alignment: Alignment.center, 
+                    child: Image.network(getCustomerFace(widget.cardCase),),),), 
+                  LinearProgressIndicator(value: widget.incrupController.value,), 
+                ],)
+            ),
+            Container(width:4), 
+            Container(width: 1, color: Colors.blueGrey), 
+            Container(width:4),
+            SizedBox(
+              width: 70,
+              child: Center(child: Column(children: [
+              Text("Case : " + widget.cardCase.CaseID.toString()), 
+            ] ,), 
+              ),)             
+        ],) ),)
+    ); 
+  }
+}
+
+
+class CaseCard extends StatefulWidget implements CaseContainer {
+  final Case cardCase; 
+  final Function onDragComplete;
+  late AnimationController incrupController;
+  final double initialIncrupProgressValue; 
+
+  CaseCard({ Key? key, required this.cardCase, required this.onDragComplete,required this.initialIncrupProgressValue, }) : super(key: key);
 
   @override
   _CaseCardState createState() => _CaseCardState();
 }
 
 class _CaseCardState extends State<CaseCard> with TickerProviderStateMixin{
-  late AnimationController incrupController;
-
   String getCustomerFace(Case c) {
-    return 'http://localhost:80/customer_faces/FACEID_3.png'.replaceAll("FACEID", c.CustomerID.toString()); 
+    return 'http://localhost:80/customer_faces/FACEID_CUSTOMER_SENTIMENT.png'.
+    replaceAll("FACEID", c.CustomerID.toString()).
+    replaceAll("CUSTOMER_SENTIMENT", c.CustomerSentiment.toString()); 
   }
 
   @override
   void initState() {
-    incrupController = AnimationController(vsync: this, 
-    duration: const Duration(seconds:6))..addListener(() {
+    widget.incrupController = AnimationController(vsync: this, 
+    duration: const Duration(seconds:8))..addListener(() {
         setState(() {});
       });
-    incrupController.forward();
+    widget.incrupController.value = widget.initialIncrupProgressValue; 
+    widget.incrupController.forward();
     super.initState();
   }
 
+  @override
+  void dispose() {
+    widget.incrupController.dispose(); 
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -411,7 +546,7 @@ class _CaseCardState extends State<CaseCard> with TickerProviderStateMixin{
               width: 70,
               child: Center(child: Column(children: [
               Text("Case : " + widget.cardCase.CaseID.toString()), 
-              LinearProgressIndicator(value: incrupController.value,), 
+              LinearProgressIndicator(value: widget.incrupController.value,), 
             ] ,), 
               ),)             
         ],) ),)
@@ -443,6 +578,7 @@ class _NewCaseCardState extends State<NewCaseCard> with TickerProviderStateMixin
             if (snapshot.hasData) {
               widget.myCase = snapshot.data!; 
               var card = CaseCard(cardCase: snapshot.data!, 
+                initialIncrupProgressValue: 0.0,
                 onDragComplete: () => {              
                 //Remove it from the original card.
                 widget.removeFunction(snapshot.data!)} ,); 
