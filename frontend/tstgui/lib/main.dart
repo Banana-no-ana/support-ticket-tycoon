@@ -35,6 +35,31 @@ class Case {
   }
 }
 
+class CaseStage {
+  final int stageType; 
+  final int stageStatus;
+  final int completedWork; 
+  final int totalWork; 
+
+  CaseStage({
+    required this.stageType, 
+    required this.stageStatus, 
+    required this.completedWork, 
+    required this.totalWork, 
+  }); 
+
+  factory CaseStage.fromJson(Map<String, dynamic> json) {
+    return CaseStage(
+      stageType: json['stageType'],
+      // Status: json['Status'],
+      stageStatus: json['stageStatus']?.isEmpty ?? 0,
+      completedWork: json['completedWork'],
+      totalWork: json['totalWork'] ?? 3
+    );
+  }
+}
+
+
 
 
 Future<List<Worker>> getWorkers() async {
@@ -457,7 +482,7 @@ class _CaseCard2State extends State<CaseCard2> with TickerProviderStateMixin {
       // If the server did return a 200 OK response,
       // then parse the JSON.
       var d = jsonDecode(response.body); 
-      Case c = Case.fromJson(d);  
+      // Case c = Case.fromJson(d);  
       return Case.fromJson(jsonDecode(response.body));
     } else {
       // If the server did not return a 200 OK response,
@@ -474,7 +499,7 @@ class _CaseCard2State extends State<CaseCard2> with TickerProviderStateMixin {
       });
     caseUpdateTimer = Timer.periodic(Duration(milliseconds: 600), (Timer t) {
       //First make the network call to get case updates. Then setstate 
-
+      
       setState(() {
         
       });
@@ -596,12 +621,12 @@ class _CaseCardState extends State<CaseCard> with TickerProviderStateMixin{
         widget.onDragComplete()}, 
       child: Align( alignment: Alignment.topLeft, 
         child: SizedBox(
-          width: 140, height: 70, 
+          width: 140, height: 100, 
           child: Row(
             children: [
             SizedBox(
               width: 60,
-              height: 60,              
+              height: 100,              
               //Customer face Image
               child: Align(alignment: Alignment.center, child: Image.network(getCustomerFace(widget.cardCase),),),
             ),             
@@ -611,7 +636,7 @@ class _CaseCardState extends State<CaseCard> with TickerProviderStateMixin{
             SizedBox(
               width: 70,
               child: Center(child: Column(children: [
-              Text("Case : " + widget.cardCase.CaseID.toString()), 
+              Text("Help!",), 
               LinearProgressIndicator(value: widget.incrupController.value,), 
             ] ,), 
               ),)             
@@ -636,7 +661,7 @@ class _NewCaseCardState extends State<NewCaseCard> with TickerProviderStateMixin
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 30,
+      height: 60,
       child: FutureBuilder<Case>(
         future: widget.futureCase,
         builder: (context, snapshot) {
