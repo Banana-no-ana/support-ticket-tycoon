@@ -200,7 +200,7 @@ type Case struct {
 
 	CaseID            int32        `protobuf:"varint,1,opt,name=CaseID,proto3" json:"CaseID,omitempty"`
 	Assignee          int32        `protobuf:"varint,2,opt,name=Assignee,proto3" json:"Assignee,omitempty"`
-	CustomerID        int32        `protobuf:"varint,3,opt,name=CustomerID,proto3" json:"CustomerID,omitempty"` //Which customer is it
+	CustomerID        int32        `protobuf:"varint,3,opt,name=CustomerID,proto3" json:"CustomerID,omitempty"` //Not currently used right now, but that's OK.
 	CurrentStage      int32        `protobuf:"varint,4,opt,name=CurrentStage,proto3" json:"CurrentStage,omitempty"`
 	CustomerSentiment int32        `protobuf:"varint,5,opt,name=CustomerSentiment,proto3" json:"CustomerSentiment,omitempty"` //Customer's current sentiment of the case (range between 1, 2, 3, 4, 5 (5 being happy))
 	CaseStages        []*CaseStage `protobuf:"bytes,6,rep,name=CaseStages,proto3" json:"CaseStages,omitempty"`

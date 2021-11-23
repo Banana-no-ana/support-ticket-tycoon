@@ -35,6 +35,8 @@ class Case {
   }
 }
 
+
+
 Future<List<Worker>> getWorkers() async {
   final response = await http.get(
     Uri.parse('http://localhost:8001/worker/list'),
@@ -89,16 +91,17 @@ class MyApp extends StatelessWidget {
   }
 }
 
-
 class Worker {
   final int WorkerID; //Assigned worker ID
   final String Name; //Generated from a list of names
   final int FaceID; //Icon for worker face
+  final WorkerSkill Skills; 
 
   Worker({
     required this.WorkerID,
     required this.Name,
     required this.FaceID,
+    required this.Skills, 
   });
 
   factory Worker.fromJson(Map<String, dynamic> json) {
@@ -106,6 +109,50 @@ class Worker {
       WorkerID: json['WorkerID'],
       Name: json['Name'],
       FaceID: json['FaceID'],
+      Skills: WorkerSkill.fromJson(json['Skills'],)
+    );
+  }
+}
+
+class WorkerSkill {
+  int Troubleshoot = 1;
+  int Build = 2;
+  int Research = 3;
+  int WebTech = 4;
+  
+  int Admin = 5;
+  int Usage = 6; 
+  int Architecture = 7; 
+  int Ecosystem = 8; 
+
+  int Explain = 9;
+  int Empathy = 10;
+
+  WorkerSkill({
+    required this.Troubleshoot,
+    required this.Build,
+    required this.Research,
+    required this.WebTech,
+    required this.Admin,
+    required this.Usage,
+    required this.Architecture,
+    required this.Ecosystem,
+    required this.Explain,
+    required this.Empathy,
+  });
+
+  factory WorkerSkill.fromJson(Map<String, dynamic> json) {
+    return WorkerSkill(
+      Troubleshoot: json['Troubleshoot'] ?? 0,
+      Build: json['Build'] ?? 0 ,
+      Research: json['Research'] ?? 0,
+      WebTech: json['WebTech'] ?? 0,
+      Admin: json['Admin'] ?? 0,
+      Usage: json['Usage'] ?? 0,
+      Architecture: json['Architecture'] ?? 0,
+      Ecosystem: json['Ecosystem'] ?? 0,
+      Explain: json['Explain'] ?? 0,
+      Empathy: json['Empathy'] ?? 0,    
     );
   }
 }
@@ -266,7 +313,7 @@ class _WorkerCardState extends State<WorkerCard> with TickerProviderStateMixin {
                 Column(
                   children: [Text('Agent ' + widget.worker.WorkerID.toString() + ': ' + widget.worker.Name),
                   const Divider(height: 15,), 
-                  const WorkerSkillTable()],),                 
+                  WorkerSkillTable(skills: widget.worker.Skills)],),                 
                 Align(alignment: Alignment.topRight,
                   child: Image.network(getWorkerFace(widget.worker.FaceID), width: 100, ),),],),
               const Divider(height:15, thickness:3, indent:10, endIndent: 10, color: Colors.black26,), 
@@ -304,8 +351,23 @@ class _WorkerCardState extends State<WorkerCard> with TickerProviderStateMixin {
   }
 }
 
+
 class WorkerSkillTable extends StatelessWidget {
-  const WorkerSkillTable({ Key? key }) : super(key: key);
+  final WorkerSkill skills; 
+  const WorkerSkillTable({ Key? key , required this.skills }) : super(key: key);
+
+  Color gs(int skillLevel) {
+    switch (skillLevel) {
+      case 0: return Colors.black12; 
+      case 1: return Colors.white; 
+      case 2: return Colors.yellow; 
+      case 3: return Colors.orange; 
+      case 4: return Colors.blue; 
+      case 5: return Colors.black; 
+    }
+    return Colors.black12; 
+
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -326,24 +388,24 @@ class WorkerSkillTable extends StatelessWidget {
       children: [
         TableRow(children: [
               Container(),
-              Icon(Icons.live_help, color: Colors.green,), 
-              Icon(Icons.zoom_in, color: Colors.green,), 
+              Icon(Icons.live_help, color: gs(skills.Troubleshoot),), 
+              Icon(Icons.zoom_in, color: gs(skills.Research),), 
               Container(),
-              Icon(Icons.admin_panel_settings, color: Colors.green,),
-              Icon(Icons.bug_report, color: Colors.green,),
+              Icon(Icons.admin_panel_settings, color: gs(skills.Admin),),
+              Icon(Icons.bug_report, color: gs(skills.Architecture),),
               Container(),
-              Icon(Icons.closed_caption, color: Colors.green,),
+              Icon(Icons.closed_caption, color: gs(skills.Explain),),
               Container(),
         ]), 
         TableRow(children: [
               Container(),
-              Icon(Icons.construction, color: Colors.green,), 
-              Icon(Icons.backup, color: Colors.green,), 
+              Icon(Icons.construction, color:  gs(skills.Build),), 
+              Icon(Icons.backup, color:  gs(skills.WebTech),), 
               Container(),
-              Icon(Icons.extension, color: Colors.green,),
-              Icon(Icons.dashboard, color: Colors.green,),
+              Icon(Icons.extension, color:  gs(skills.Usage),),
+              Icon(Icons.dashboard, color:  gs(skills.Ecosystem),),
               Container(),
-              Icon(Icons.mood, color: Colors.green,),
+              Icon(Icons.mood, color: gs(skills.Empathy),),
               Container(),
         ]), 
       ],
@@ -351,6 +413,7 @@ class WorkerSkillTable extends StatelessWidget {
       ; 
   }
 }
+
 
 //Define interface for new casecard and old case cards
 abstract class CaseContainer {
@@ -376,6 +439,8 @@ class CaseCard2 extends StatefulWidget implements CaseContainer{
 }
 
 class _CaseCard2State extends State<CaseCard2> with TickerProviderStateMixin {
+  late Timer caseUpdateTimer; 
+
   String getCustomerFace(Case c) {
     return 'http://localhost:80/customer_faces/FACEID_CUSTOMER_SENTIMENT.png'.
     replaceAll("FACEID", c.CustomerID.toString()).
@@ -407,7 +472,7 @@ class _CaseCard2State extends State<CaseCard2> with TickerProviderStateMixin {
     duration: const Duration(seconds:8))..addListener(() {
         setState(() {});
       });
-    Timer.periodic(Duration(milliseconds: 600), (Timer t) {
+    caseUpdateTimer = Timer.periodic(Duration(milliseconds: 600), (Timer t) {
       //First make the network call to get case updates. Then setstate 
 
       setState(() {
@@ -422,6 +487,7 @@ class _CaseCard2State extends State<CaseCard2> with TickerProviderStateMixin {
   @override
   void dispose() {
     widget.incrupController.dispose(); 
+    caseUpdateTimer.cancel(); 
     super.dispose();
   }
 
