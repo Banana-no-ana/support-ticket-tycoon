@@ -180,9 +180,21 @@ func assign(w http.ResponseWriter, req *http.Request) {
 }
 
 func getcase(w http.ResponseWriter, req *http.Request) {
-	//Unassign from current assignee
-	//Assign to new assignee
+	vars := mux.Vars(req)
+	caseid, _ := strconv.Atoi(vars["caseid"])
 
+	log.Println("Received GET request for case: ", caseid)
+	curCase := cases[int32(caseid)]
+
+	*curCase = *getCaseUpdate(curCase)
+
+	caseJson, err := protojson.Marshal(curCase)
+	if err != nil {
+		log.Println(err)
+		fmt.Fprintf(w, "400: Failed to marshal case: %d", caseid)
+		return
+	}
+	fmt.Fprintf(w, string(caseJson))
 }
 
 func registerWorker(w http.ResponseWriter, req *http.Request) {

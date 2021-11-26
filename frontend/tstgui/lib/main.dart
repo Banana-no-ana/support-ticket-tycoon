@@ -15,6 +15,7 @@ class Case {
   final int Assignee; //Worker UID
   final int CustomerID; 
   final int CustomerSentiment;
+  final List<CaseStage> CaseStages; 
 
   Case({
     required this.CaseID,
@@ -22,45 +23,54 @@ class Case {
     required this.Assignee,
     required this.CustomerID,
     required this.CustomerSentiment,
+    required this.CaseStages,
   });
 
   factory Case.fromJson(Map<String, dynamic> json) {
+    List<CaseStage> stages = []; 
+    if (json.containsKey('CaseStages')) {
+      Iterable stageList = json['CaseStages']; 
+      // CaseStage firStage = CaseStage.fromJson(stageList.first); 
+      stages = List<CaseStage>.from(stageList.map((e) => CaseStage.fromJson(e)));   
+    }   
+
     return Case(
       CaseID: json['CaseID'],
       // Status: json['Status'],
-      Assignee: json['Assignee']?.isEmpty ?? 0,
+      Assignee: json['Assignee'] ?? 0,
       CustomerID: json['CustomerID'],
-      CustomerSentiment: json['CustomerSentiment'] ?? 3
+      CustomerSentiment: json['CustomerSentiment'] ?? 3, 
+      CaseStages: stages, 
     );
   }
 }
 
 class CaseStage {
-  final int stageType; 
-  final int stageStatus;
-  final int completedWork; 
-  final int totalWork; 
+  final int StageID; 
+  final String StageType; 
+  final String StageStatus;
+  final int CompletedWork; 
+  final int TotalWork; 
 
   CaseStage({
-    required this.stageType, 
-    required this.stageStatus, 
-    required this.completedWork, 
-    required this.totalWork, 
+    required this.StageID, 
+    required this.StageType, 
+    required this.StageStatus, 
+    required this.CompletedWork, 
+    required this.TotalWork, 
   }); 
 
   factory CaseStage.fromJson(Map<String, dynamic> json) {
     return CaseStage(
-      stageType: json['stageType'],
+      StageID: json['StageID']?? 0, 
+      StageType: json['Type']?? 'Undefined',
       // Status: json['Status'],
-      stageStatus: json['stageStatus']?.isEmpty ?? 0,
-      completedWork: json['completedWork'],
-      totalWork: json['totalWork'] ?? 3
+      StageStatus: json['Status'] ?? '',
+      CompletedWork: json['Completedwork'] ?? 0,
+      TotalWork: json['Totalwork'] ?? 0, 
     );
   }
 }
-
-
-
 
 Future<List<Worker>> getWorkers() async {
   final response = await http.get(
@@ -90,8 +100,6 @@ Future<Case> createCase() async {
   if (response.statusCode == 200) {
     // If the server did return a 200 OK response,
     // then parse the JSON.
-    var d = jsonDecode(response.body); 
-    Case c = Case.fromJson(d);  
     return Case.fromJson(jsonDecode(response.body));
   } else {
     // If the server did not return a 200 OK response,
@@ -465,6 +473,7 @@ class CaseCard2 extends StatefulWidget implements CaseContainer{
 
 class _CaseCard2State extends State<CaseCard2> with TickerProviderStateMixin {
   late Timer caseUpdateTimer; 
+  late List<CaseStage> caseStages; 
 
   String getCustomerFace(Case c) {
     return 'http://localhost:80/customer_faces/FACEID_CUSTOMER_SENTIMENT.png'.
@@ -473,17 +482,19 @@ class _CaseCard2State extends State<CaseCard2> with TickerProviderStateMixin {
   }
 
 
-  Future<Case> getCaseUpdate() async {
+  Future<void> getCaseUpdate(Case supCase) async {
     final response = await http.get(
-      Uri.parse('http://localhost:8001/case/get'),
+      Uri.parse('http://localhost:8001/case/get/CASEID'
+        .replaceAll('CASEID', supCase.CaseID.toString())),
     );
 
     if (response.statusCode == 200) {
       // If the server did return a 200 OK response,
       // then parse the JSON.
-      var d = jsonDecode(response.body); 
-      // Case c = Case.fromJson(d);  
-      return Case.fromJson(jsonDecode(response.body));
+      var c = Case.fromJson(jsonDecode(response.body)); 
+      // caseStages = c.CaseStages; 
+      caseStages = c.CaseStages; 
+      return;
     } else {
       // If the server did not return a 200 OK response,
       // then throw an exception.
@@ -498,8 +509,8 @@ class _CaseCard2State extends State<CaseCard2> with TickerProviderStateMixin {
         setState(() {});
       });
     caseUpdateTimer = Timer.periodic(Duration(milliseconds: 600), (Timer t) {
-      //First make the network call to get case updates. Then setstate 
-      
+      //First make the network call to get case updates. Then setstate       
+      // unawaited(getCaseUpdate(widget.cardCase)); 
       setState(() {
         
       });
@@ -557,7 +568,11 @@ class _CaseCard2State extends State<CaseCard2> with TickerProviderStateMixin {
             SizedBox(
               width: 70,
               child: Center(child: Column(children: [
-              Text("Case : " + widget.cardCase.CaseID.toString()), 
+              Text("Case : " + widget.cardCase.CaseID.toString()),
+              InkWell(child: Text("Get Case Update"), 
+                onTap: () {
+                  unawaited(getCaseUpdate(widget.cardCase)); 
+                },),
             ] ,), 
               ),)             
         ],) ),)
