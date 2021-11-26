@@ -16,18 +16,19 @@ message Case {
 
 
 enum SkillEnum {
-    Troubleshoot = 0;
-    Build = 1;
-    Research = 2;
-    WebTech = 3;
+    Undefined = 0; 
+    Troubleshoot = 1;
+    Build = 2;
+    Research = 3;
+    WebTech = 4;
    
-    Admin = 4;
-    Usage = 5; 
-    Architecture = 6; 
-    Ecosystem = 7; 
+    Admin = 5;
+    Usage = 6; 
+    Architecture = 7; 
+    Ecosystem = 8; 
 
-    Explain = 8;
-    Empathy = 9;
+    Explain = 9;
+    Empathy = 10;
 }
 
 

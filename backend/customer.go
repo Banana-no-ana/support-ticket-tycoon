@@ -76,17 +76,17 @@ func getDifficulty() int32 {
 func generateCaseStage(stage int32, last_stage bool) *pb.CaseStage {
 	dif := getDifficulty()
 
-	var typ int = 0
+	var typ int = 0 // There are 10 types, and it is 1-indexed.
 
 	if stage == 1 {
-		//Initial stage is only the first 3 types.
-		typ = rand.Intn(4)
+		//Initial stage is only the first 4 types. It is 1-indexed, since 0 is "undefined"
+		typ = rand.Intn(4) + 1
 		dif = 0 //Initial triage is always short.
 	} else if last_stage {
-		//Only use the last 2 for final stages
-		typ = rand.Intn(2) + 8
+		//Only use the last 2 for final stages. It is 1-indexed.
+		typ = rand.Intn(2) + 9
 	} else {
-		typ = rand.Intn(10)
+		typ = rand.Intn(10) + 1
 	}
 
 	st := pb.CaseStage{StageID: stage, Status: pb.StageStatus_Working, Difficulty: dif,
