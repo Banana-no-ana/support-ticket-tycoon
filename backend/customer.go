@@ -87,6 +87,15 @@ func generateCaseStage(stage int32, last_stage bool) *pb.CaseStage {
 		typ = rand.Intn(2) + 9
 	} else {
 		typ = rand.Intn(10) + 1
+
+		//Roll for tech skills (5-8) again.
+		if typ <= 3 && typ >= 9 {
+			typ = rand.Intn(10) + 1
+		}
+		//Roll for tech skills (5-8) again. 3x rolls to get 66%
+		if typ <= 3 && typ >= 9 {
+			typ = rand.Intn(10) + 1
+		}
 	}
 
 	st := pb.CaseStage{StageID: stage, Status: pb.StageStatus_Working, Difficulty: dif,

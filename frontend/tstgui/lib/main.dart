@@ -399,7 +399,6 @@ class WorkerSkillTable extends StatelessWidget {
       case 5: return Colors.black; 
     }
     return Colors.black12; 
-
   }
 
   @override
@@ -447,6 +446,76 @@ class WorkerSkillTable extends StatelessWidget {
   }
 }
 
+class CaseProgressCard extends StatelessWidget {
+  final List<CaseStage> stages; 
+  const CaseProgressCard({ Key? key, required this.stages }) : 
+    super(key: key);
+
+  Color getIconColor(int difficulty) {
+    switch (difficulty) {
+      case 0: return Colors.black12; 
+      case 1: return Colors.white; 
+      case 2: return Colors.yellow; 
+      case 3: return Colors.orange; 
+      case 4: return Colors.blue; 
+      case 5: return Colors.black; 
+      default: return Colors.black12; 
+    }
+  }
+
+  SizedBox buildSkillIcon(CaseStage sc) {
+    Icon ic;
+    double s = 32; 
+    switch (sc.StageType) {
+      case "Troubleshoot":
+        ic = Icon(Icons.live_help, color: getIconColor(sc.TotalWork), size: s); 
+        break;
+      case "Build":
+        ic = Icon(Icons.construction, color: getIconColor(sc.TotalWork), size: s); 
+        break;
+      case "Research":
+        ic = Icon(Icons.zoom_in, color: getIconColor(sc.TotalWork), size: s); 
+        break;
+      case "WebTech":
+        ic = Icon(Icons.backup, color: getIconColor(sc.TotalWork), size: s); 
+        break;
+      case "Admin":
+        ic = Icon(Icons.admin_panel_settings, color: getIconColor(sc.TotalWork), size: s); 
+        break;
+      case "Usage":
+        ic = Icon(Icons.extension, color: getIconColor(sc.TotalWork), size: s); 
+        break;
+      case "Architecture":
+        ic = Icon(Icons.bug_report, color: getIconColor(sc.TotalWork), size: s); 
+        break;
+      case "Ecosystem":
+        ic = Icon(Icons.dashboard, color: getIconColor(sc.TotalWork), size: s); 
+        break;
+      case "Explain":
+        ic = Icon(Icons.closed_caption, color: getIconColor(sc.TotalWork), size: s); 
+        break;
+      case "Empathy":
+        ic = Icon(Icons.mood, color: getIconColor(sc.TotalWork), size: s); 
+        break;
+      default:
+        ic = const Icon(Icons.error); 
+    }
+
+    return SizedBox(width: 40, height: 40, child: ic); 
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: ListView.separated(
+      scrollDirection: Axis.horizontal,
+      physics: const NeverScrollableScrollPhysics(),
+      itemBuilder: (BuildContext context, int index) {
+         return buildSkillIcon(stages[index]); 
+      }, 
+      separatorBuilder:  (BuildContext context, int index) => Container(width: 4,), 
+      itemCount: stages.length),);
+  }
+}
 
 //Define interface for new casecard and old case cards
 abstract class CaseContainer {
@@ -504,15 +573,15 @@ class _CaseCard2State extends State<CaseCard2> with TickerProviderStateMixin {
 
   @override
   void initState() {
+    caseStages = []; 
     widget.incrupController = AnimationController(vsync: this, 
     duration: const Duration(seconds:8))..addListener(() {
         setState(() {});
       });
     caseUpdateTimer = Timer.periodic(Duration(milliseconds: 600), (Timer t) {
       //First make the network call to get case updates. Then setstate       
-      // unawaited(getCaseUpdate(widget.cardCase)); 
       setState(() {
-        
+        unawaited(getCaseUpdate(widget.cardCase)); 
       });
      }); 
     widget.incrupController.value = widget.initialIncrupProgressValue; 
@@ -552,7 +621,7 @@ class _CaseCard2State extends State<CaseCard2> with TickerProviderStateMixin {
             Container(width: 3), 
             SizedBox(
               width: 60,
-              height: 70,              
+              height: 70,
               //Customer face Image
               child: Column(
                 children: [
@@ -566,13 +635,22 @@ class _CaseCard2State extends State<CaseCard2> with TickerProviderStateMixin {
             Container(width: 1, color: Colors.blueGrey), 
             Container(width:4),
             SizedBox(
-              width: 70,
-              child: Center(child: Column(children: [
-              Text("Case : " + widget.cardCase.CaseID.toString()),
-              InkWell(child: Text("Get Case Update"), 
-                onTap: () {
-                  unawaited(getCaseUpdate(widget.cardCase)); 
-                },),
+              width: 200, 
+              child: Center(
+                child: Column(children: [
+                  Text("Case : " + widget.cardCase.CaseID.toString()),
+                  const Divider(height: 3), 
+                  Center(child: SizedBox(height: 40, child: 
+                        CaseProgressCard(stages: caseStages),),), 
+                    // SizedBox(height: 24, width: 200, child: 
+              //     Column(children: [                
+              //       InkWell(child: Text("Get Case Update"), 
+              //         onTap: () {
+              //           unawaited(getCaseUpdate(widget.cardCase)); 
+              //           setState(() => {});
+              //         },),                   
+              // ],),               
+              // ), 
             ] ,), 
               ),)             
         ],) ),)
