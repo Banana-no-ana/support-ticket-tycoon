@@ -15,6 +15,7 @@ class Case {
   final int Assignee; //Worker UID
   final int CustomerID; 
   final int CustomerSentiment;
+  final String Status; 
   final List<CaseStage> CaseStages; 
 
   Case({
@@ -23,6 +24,7 @@ class Case {
     required this.Assignee,
     required this.CustomerID,
     required this.CustomerSentiment,
+    required this.Status, 
     required this.CaseStages,
   });
 
@@ -40,6 +42,7 @@ class Case {
       Assignee: json['Assignee'] ?? 0,
       CustomerID: json['CustomerID'],
       CustomerSentiment: json['CustomerSentiment'] ?? 3, 
+      Status: json['Status'] ?? "New",
       CaseStages: stages, 
     );
   }
@@ -246,7 +249,7 @@ class _MyHomePageState extends State<MyHomePage> {
 GridView _workerGridView(List<Worker> data) {
   return GridView.builder(
     gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        crossAxisSpacing: 20, maxCrossAxisExtent: 350, mainAxisExtent: 300,  mainAxisSpacing: 20),
+        crossAxisSpacing: 20, maxCrossAxisExtent: 350, mainAxisExtent: 350,  mainAxisSpacing: 20),
     itemCount: data.length,
     padding: EdgeInsets.all(10),
     itemBuilder: (BuildContext context, int index) {
@@ -307,6 +310,7 @@ class WorkerCard extends StatefulWidget {
 
 class _WorkerCardState extends State<WorkerCard> with TickerProviderStateMixin {
   List<CaseCard2> workerCases = [];
+  List<CompletedCaseCard> completedCases = [];
 
   @override
   void initState() {
@@ -321,6 +325,15 @@ class _WorkerCardState extends State<WorkerCard> with TickerProviderStateMixin {
   void removeDragged(CaseContainer toRemove) {
     workerCases
         .removeWhere((e) => e.cardCase.CaseID == toRemove.cardCase.CaseID);
+    setState(() {});
+  }
+
+  void moveToCompleted(CaseContainer toMove) {
+    completedCases.add(
+      CompletedCaseCard(cardCase: toMove.cardCase,) 
+    ); 
+    workerCases
+        .removeWhere((e) => e.cardCase.CaseID == toMove.cardCase.CaseID);
     setState(() {});
   }
 
@@ -349,15 +362,20 @@ class _WorkerCardState extends State<WorkerCard> with TickerProviderStateMixin {
                   WorkerSkillTable(skills: widget.worker.Skills)],),                 
                 Align(alignment: Alignment.topRight,
                   child: Image.network(getWorkerFace(widget.worker.FaceID), width: 100, ),),],),
-              const Divider(height:15, thickness:3, indent:10, endIndent: 10, color: Colors.black26,), 
-              Column(
-                // scrollDirection: Axis.vertical,                
-                children: [
-                  Column(
-                    children: workerCases,
-                  ),
-                ],
-              )
+                const Divider(height:15, thickness:3, indent:10, endIndent: 10, color: Colors.black26,), 
+                SizedBox(height: 150, 
+                  child: ListView.builder(
+                    itemCount: workerCases.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return Container(child: workerCases[index]); 
+                  }), ), 
+                const Divider(height: 5), 
+                SizedBox(height: 80, 
+                  child: ListView.builder(
+                    itemCount: completedCases.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return Container(child: completedCases[index]); 
+                  }), ), 
             ],
           ),
         );
@@ -368,6 +386,7 @@ class _WorkerCardState extends State<WorkerCard> with TickerProviderStateMixin {
           var newCase = CaseCard2(
               cardCase: draggedCard.cardCase,
               initialIncrupProgressValue: draggedCard.incrupController.value, 
+              onCaseComplete: () => {moveToCompleted(draggedCard)},
               onDragComplete: () {
                 //the target draggable with call this function so to remove it from the existing worker
                 removeDragged(draggedCard);
@@ -463,7 +482,7 @@ class CaseProgressCard extends StatelessWidget {
     }
   }
 
-  SizedBox buildSkillIcon(CaseStage sc) {
+  Stack buildSkillIcon(CaseStage sc) {
     Icon ic;
     double s = 32; 
     switch (sc.StageType) {
@@ -501,7 +520,10 @@ class CaseProgressCard extends StatelessWidget {
         ic = const Icon(Icons.error); 
     }
 
-    return SizedBox(width: 40, height: 40, child: ic); 
+    return Stack( children: [
+      Center(child: SizedBox(width: 40, height: 40, child: ic), ), 
+      Center(child: SizedBox(width: 41, height: 42, child: CircularProgressIndicator(value: sc.CompletedWork / sc.TotalWork), ),)
+      ]);      
   }
 
   @override
@@ -512,7 +534,7 @@ class CaseProgressCard extends StatelessWidget {
       itemBuilder: (BuildContext context, int index) {
          return buildSkillIcon(stages[index]); 
       }, 
-      separatorBuilder:  (BuildContext context, int index) => Container(width: 4,), 
+      separatorBuilder:  (BuildContext context, int index) => Container(width: 7,), 
       itemCount: stages.length),);
   }
 }
@@ -521,20 +543,41 @@ class CaseProgressCard extends StatelessWidget {
 abstract class CaseContainer {
   final Case cardCase; 
   final Function onDragComplete;
+  final Function onCaseComplete;
   late AnimationController incrupController;
   final double initialIncrupProgressValue; 
 
-  CaseContainer({ Key? key, required this.cardCase, required this.onDragComplete,required this.initialIncrupProgressValue, }); 
+  CaseContainer({ Key? key, required this.cardCase, 
+    required this.onDragComplete,
+    required this.initialIncrupProgressValue, 
+    required this.onCaseComplete}); 
+}
+
+class CompletedCaseCard extends StatelessWidget {
+  final Case cardCase; 
+
+  const CompletedCaseCard({ Key? key, 
+    required this.cardCase, }) : super(key: key);
+  
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      child: Text("Completed Case"),
+    );
+  }
 }
 
 //New case card because dynamically figuring out sizing new cases and existing cases is too hard :(
 class CaseCard2 extends StatefulWidget implements CaseContainer{
   final Case cardCase; 
   final Function onDragComplete;
+  final Function onCaseComplete;
   late AnimationController incrupController;
   final double initialIncrupProgressValue; 
 
-  CaseCard2({ Key? key, required this.cardCase, required this.onDragComplete,required this.initialIncrupProgressValue, }) : super(key: key);
+  CaseCard2({ Key? key, required this.cardCase, 
+    required this.onCaseComplete,   
+    required this.onDragComplete,required this.initialIncrupProgressValue, }) : super(key: key);
 
   @override
   _CaseCard2State createState() => _CaseCard2State();
@@ -563,6 +606,12 @@ class _CaseCard2State extends State<CaseCard2> with TickerProviderStateMixin {
       var c = Case.fromJson(jsonDecode(response.body)); 
       // caseStages = c.CaseStages; 
       caseStages = c.CaseStages; 
+
+      if (c.Status == "Closed") {
+        widget.onCaseComplete(); 
+        caseUpdateTimer.cancel(); 
+      }
+
       return;
     } else {
       // If the server did not return a 200 OK response,
@@ -639,7 +688,7 @@ class _CaseCard2State extends State<CaseCard2> with TickerProviderStateMixin {
               child: Center(
                 child: Column(children: [
                   Text("Case : " + widget.cardCase.CaseID.toString()),
-                  const Divider(height: 3), 
+                  const Divider(height: 7), 
                   Center(child: SizedBox(height: 40, child: 
                         CaseProgressCard(stages: caseStages),),), 
                     // SizedBox(height: 24, width: 200, child: 
@@ -662,10 +711,14 @@ class _CaseCard2State extends State<CaseCard2> with TickerProviderStateMixin {
 class CaseCard extends StatefulWidget implements CaseContainer {
   final Case cardCase; 
   final Function onDragComplete;
+  final Function onCaseComplete;
   late AnimationController incrupController;
   final double initialIncrupProgressValue; 
 
-  CaseCard({ Key? key, required this.cardCase, required this.onDragComplete,required this.initialIncrupProgressValue, }) : super(key: key);
+
+  CaseCard({ Key? key, required this.cardCase, 
+    required this.onCaseComplete, 
+    required this.onDragComplete,required this.initialIncrupProgressValue, }) : super(key: key);
 
   @override
   _CaseCardState createState() => _CaseCardState();
@@ -763,6 +816,7 @@ class _NewCaseCardState extends State<NewCaseCard> with TickerProviderStateMixin
               widget.myCase = snapshot.data!; 
               var card = CaseCard(cardCase: snapshot.data!, 
                 initialIncrupProgressValue: 0.0,
+                onCaseComplete: () => {},
                 onDragComplete: () => {              
                 //Remove it from the original card.
                 widget.removeFunction(snapshot.data!)} ,); 
